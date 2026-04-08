@@ -81,47 +81,70 @@
                             </td>
                         </tr>
 
-                        <div class="modal fade" id="modalEdit<?= $k['kegiatan_id'] ?>" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0">
-                                    <form action="<?= base_url('admin/update_kegiatan/' . $k['kegiatan_id']) ?>" method="POST" enctype="multipart/form-data">
-                                        <?= csrf_field() ?>
-                                        <div class="modal-header">
-                                            <h5 class="fw-bold">Edit Kegiatan</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                       <div class="modal fade" id="modalEdit<?= $k['kegiatan_id'] ?>" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0">
+                                <form action="<?= base_url('admin/update_kegiatan/' . $k['kegiatan_id']) ?>" method="POST" enctype="multipart/form-data">
+                                    <?= csrf_field() ?>
+                                    <div class="modal-header">
+                                        <h5 class="fw-bold">Edit Kegiatan</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Judul Kegiatan</label>
+                                            <input type="text" name="judul_kegiatan" class="form-control" value="<?= $k['judul_kegiatan'] ?>" required>
                                         </div>
-                                        <div class="modal-body text-start">
-                                            <div class="mb-3">
-                                                <label class="form-label small fw-bold">Judul Kegiatan</label>
-                                                <input type="text" name="judul_kegiatan" class="form-control" value="<?= $k['judul_kegiatan'] ?>" required>
+                                        
+                                        <div class="row">
+                                            <div class="col-12 mb-3">
+                                                <label class="form-label small fw-bold text-warning">Ubah Titik Lokasi (Klik pada Peta)</label>
+                                                <div id="mapEdit-<?= $k['kegiatan_id'] ?>" style="height: 300px; width: 100%; border-radius: 12px; background-color: #eee;" class="border shadow-sm"></div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-6 mb-3">
-                                                    <label class="form-label small fw-bold">Tanggal</label>
-                                                    <input type="date" name="tanggal" class="form-control" value="<?= $k['tanggal'] ?>" required>
-                                                </div>
-                                                <div class="col-6 mb-3">
-                                                    <label class="form-label small fw-bold">Lokasi</label>
-                                                    <input type="text" name="lokasi" class="form-control" value="<?= $k['lokasi'] ?>" required>
-                                                </div>
+                                            <div class="col-6 mb-3">
+                                                <label class="form-label small fw-bold">Latitude</label>
+                                                <input type="text" name="latitude" id="latEdit-<?= $k['kegiatan_id'] ?>" class="form-control" value="<?= $k['latitude'] ?>" readonly required>
                                             </div>
-                                            <div class="mb-3">
-                                                <label class="form-label small fw-bold">Update Foto (Bisa banyak)</label>
-                                                <input type="file" name="foto[]" class="form-control" accept="image/*" multiple>
-                                                <small class="text-muted" style="font-size: 11px;">Abaikan jika tidak ingin mengganti foto.</small>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label small fw-bold">Deskripsi</label>
-                                                <textarea name="deskripsi" class="form-control" rows="3"><?= $k['deskripsi'] ?></textarea>
+                                            <div class="col-6 mb-3">
+                                                <label class="form-label small fw-bold">Longitude</label>
+                                                <input type="text" name="longitude" id="lngEdit-<?= $k['kegiatan_id'] ?>" class="form-control" value="<?= $k['longitude'] ?>" readonly required>
                                             </div>
                                         </div>
-                                        <div class="modal-footer">
-                                            <button type="submit" class="btn btn-warning px-4 text-white">Simpan Perubahan</button>
+
+                                        <div class="row">
+                                            <div class="col-6 mb-3">
+                                                <label class="form-label small fw-bold">Tanggal</label>
+                                                <input type="date" name="tanggal" class="form-control" value="<?= $k['tanggal'] ?>" required>
+                                            </div>
+                                            <div class="col-6 mb-3">
+                                                <label class="form-label small fw-bold">Lokasi (Alamat)</label>
+                                                <input type="text" name="lokasi" class="form-control" value="<?= $k['lokasi'] ?>" required>
+                                            </div>
                                         </div>
-                                    </form>
-                                </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Anggaran (Rp)</label>
+                                            <input type="number" name="anggaran" class="form-control" value="<?= $k['anggaran'] ?>">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Update Foto (Bisa banyak)</label>
+                                            <input type="file" name="foto[]" class="form-control" accept="image/*" multiple>
+                                            <small class="text-muted" style="font-size: 11px;">Biarkan kosong jika tidak ingin mengubah foto.</small>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Deskripsi</label>
+                                            <textarea name="deskripsi" class="form-control" rows="3"><?= $k['deskripsi'] ?></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-warning px-4 text-white">Simpan Perubahan</button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
+                    </div>
                         <?php endforeach; ?>
                     <?php else : ?>
                         <tr>
@@ -184,6 +207,64 @@
 </div>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Variable global untuk menyimpan instance map agar tidak double init
+    var editMaps = {};
+
+    <?php foreach ($kegiatan as $k) : ?>
+    document.getElementById('modalEdit<?= $k['kegiatan_id'] ?>').addEventListener('shown.bs.modal', function () {
+        const id = "<?= $k['kegiatan_id'] ?>";
+        const containerId = 'mapEdit-' + id;
+        
+        // Ambil data koordinat lama
+        let oldLat = document.getElementById('latEdit-' + id).value;
+        let oldLng = document.getElementById('lngEdit-' + id).value;
+
+        // Tentukan titik tengah (jika kosong pakai Sambas)
+        let latlng = (oldLat && oldLng) ? [parseFloat(oldLat), parseFloat(oldLng)] : [1.3622, 109.3117];
+
+        // Hancurkan map lama jika sudah ada (mencegah error "map already initialized")
+        if (editMaps[id]) {
+            editMaps[id].remove();
+        }
+
+        // Inisialisasi Map Baru
+        editMaps[id] = L.map(containerId).setView(latlng, 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(editMaps[id]);
+
+        // Buat Marker yang bisa ditarik (Draggable)
+        let marker = L.marker(latlng, {
+            draggable: true
+        }).addTo(editMaps[id]);
+
+        // Fungsi Update Input Field
+        function updateFields(lat, lng) {
+            document.getElementById('latEdit-' + id).value = lat.toFixed(7);
+            document.getElementById('lngEdit-' + id).value = lng.toFixed(7);
+        }
+
+        // Kejadian saat Marker digeser
+        marker.on('dragend', function(event) {
+            let pos = marker.getLatLng();
+            updateFields(pos.lat, pos.lng);
+        });
+
+        // Kejadian saat Peta diklik
+        editMaps[id].on('click', function(e) {
+            marker.setLatLng(e.latlng);
+            updateFields(e.latlng.lat, e.latlng.lng);
+        });
+
+        // PAKSA MUNCUL: Invalidate size setelah animasi modal selesai
+        setTimeout(() => {
+            editMaps[id].invalidateSize();
+        }, 400);
+    });
+    <?php endforeach; ?>
+</script>
 <script>
     var map;
     var marker;
