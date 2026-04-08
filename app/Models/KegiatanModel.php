@@ -24,13 +24,15 @@ class KegiatanModel extends Model
         'deskripsi', 
         'tanggal', 
         'lokasi', 
+        'latitude',  // <--- PASTIKAN INI ADA
+        'longitude',
         'anggaran', 
         'status', 
         'foto'
     ];
 
     // Aktifkan pencatatan waktu otomatis
-    protected $useTimestamps    = true;
+    protected $useTimestamps    = false;
     protected $createdField     = 'created_at';
     protected $updatedField     = 'updated_at';
 

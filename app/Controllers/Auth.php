@@ -49,7 +49,7 @@ class Auth extends BaseController
                     'logged_in'  => true,
                 ]);
 
-                return redirect()->to('/dashboard')->with('success', 'Selamat Datang Kembali, ' . $user['nama_lengkap'] . '!');
+                return redirect()->to('/admin')->with('success', 'Selamat Datang Kembali, ' . $user['nama_lengkap'] . '!');
                 
             } else {
                 return redirect()->back()->with('error', 'Password salah.');
@@ -86,10 +86,12 @@ class Auth extends BaseController
         }
     }
 
-    public function logout()
+   public function logout()
     {
         $session = session();
         $session->destroy();
-        return redirect()->to('/')->with('success', 'Sampai jumpa!');
+
+        // Balikkan ke landing page dengan pesan sukses
+        return redirect()->to('/')->with('success', 'Anda telah berhasil keluar dari sistem.');
     }
 }
