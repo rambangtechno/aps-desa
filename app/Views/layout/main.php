@@ -140,31 +140,31 @@
 
 <div class="d-flex">
     <div class="sidebar" id="sidebar">
-        <div class="brand-wrapper">
-            <div class="d-flex align-items-center">
-                <div class="bg-success rounded-3 p-2 me-3 shadow-sm" style="background: var(--primary-green) !important;">
-                    <i class="fas fa-leaf text-white fa-lg"></i>
-                </div>
-                <div>
-                    <h6 class="fw-bold mb-0 brand-text">Segarau Parit</h6>
-                    <small class="text-muted fw-medium" style="font-size: 0.7rem;">DESA DIGITAL</small>
-                </div>
+    <div class="brand-wrapper">
+        <div class="d-flex align-items-center">
+            <div class="bg-success rounded-3 p-2 me-3 shadow-sm" style="background: var(--primary-green) !important;">
+                <i class="fas fa-leaf text-white fa-lg"></i>
+            </div>
+            <div>
+                <h6 class="fw-bold mb-0 brand-text">Segarau Parit</h6>
+                <small class="text-muted fw-medium" style="font-size: 0.7rem;">DESA DIGITAL</small>
             </div>
         </div>
-        
-        <div class="sidebar-menu flex-grow-1">
-            <ul class="nav flex-column mt-3">
+    </div>
+    
+    <div class="sidebar-menu flex-grow-1">
+        <ul class="nav flex-column mt-3">
+            
+            <?php if (session()->get('role') == 'admin') : ?>
                 <li class="nav-item">
                     <a class="nav-link <?= (url_is('admin') || url_is('admin/index')) ? 'active' : '' ?>" href="<?= base_url('admin') ?>">
-                        <i class="fas fa-grid-2 me-2"></i> Dashboard
+                        <i class="fas fa-chart-line me-2"></i> Dashboard
                     </a>
                 </li>
-
-                <?php if (session()->get('role') == 'admin') : ?>
                 <div class="sidebar-label">Manajemen</div>
                 <li class="nav-item">
                     <a class="nav-link <?= (url_is('admin/kegiatan*')) ? 'active' : '' ?>" href="<?= base_url('admin/kegiatan') ?>">
-                        <i class="fas fa-clipboard-list me-2"></i> Data Kegiatan
+                        <i class="fas fa-tasks me-2"></i> Data Kegiatan
                     </a>
                 </li>
                 <li class="nav-item">
@@ -173,39 +173,45 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= (url_is('admin/print_laporan*')) ? 'active' : '' ?>" href="<?= base_url('admin/print_laporan') ?>">
-                        <i class="fas fa-file-pdf me-2"></i> Cetak Laporan Resmi
+                    <a class="nav-link <?= (url_is('admin/verifikasi_user*')) ? 'active' : '' ?>" href="<?= base_url('admin/verifikasi_user') ?>">
+                        <i class="fas fa-user-check me-2"></i> Verifikasi Akun
                     </a>
                 </li>
+                <div class="sidebar-label">Laporan</div>
                 <li class="nav-item">
-                    <a class="nav-link <?= (url_is('admin/verifikasi_user*')) ? 'active' : '' ?>" href="<?= base_url('admin/verifikasi_user') ?>">
-                        <i class="fas fa-shield-check me-2 text-success"></i> Verifikasi Akun
+                    <a class="nav-link <?= (url_is('admin/print_laporan*')) ? 'active' : '' ?>" href="<?= base_url('admin/print_laporan') ?>">
+                        <i class="fas fa-print me-2"></i> Cetak Laporan
                     </a>
                 </li>
             <?php endif; ?>
 
             <?php if (session()->get('role') == 'kepala_desa') : ?>
-                <div class="sidebar-label">Otorisasi</div>
                 <li class="nav-item">
-                    <a class="nav-link <?= (url_is('kades')) ? 'active' : '' ?>" href="<?= base_url('kades') ?>">
-                        <i class="fas fa-signature me-2 text-warning"></i> Persetujuan (ACC)
+                    <a class="nav-link <?= (url_is('kades') || url_is('kades/index')) ? 'active' : '' ?>" href="<?= base_url('kades') ?>">
+                        <i class="fas fa-chart-pie me-2"></i> Dashboard
+                    </a>
+                </li>
+                <div class="sidebar-label">Otoritas Kades</div>
+                <li class="nav-item">
+                    <a class="nav-link <?= (url_is('kades/persetujuan*')) ? 'active' : '' ?>" href="<?= base_url('kades/persetujuan') ?>">
+                        <i class="fas fa-file-signature me-2"></i> Persetujuan (ACC)
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?= (url_is('kades/laporan')) ? 'active' : '' ?>" href="<?= base_url('kades/laporan') ?>">
-                        <i class="fas fa-file-invoice me-2 text-success"></i> Riwayat & Verifikasi
+                    <a class="nav-link <?= (url_is('kades/riwayat*')) ? 'active' : '' ?>" href="<?= base_url('kades/riwayat') ?>">
+                        <i class="fas fa-history me-2"></i> Riwayat & Verifikasi
                     </a>
                 </li>
             <?php endif; ?>
 
-                <li class="nav-item mt-auto">
-                    <a class="nav-link btn-logout" href="javascript:void(0)" onclick="confirmLogout()">
-                        <i class="fas fa-power-off me-2"></i> Keluar
-                    </a>
-                </li>
-            </ul>
-        </div>
+            <li class="nav-item mt-auto">
+                <a class="nav-link btn-logout" href="javascript:void(0)" onclick="confirmLogout()">
+                    <i class="fas fa-power-off me-2"></i> Keluar
+                </a>
+            </li>
+        </ul>
     </div>
+</div>
 
     <div class="content">
         <nav class="navbar navbar-expand-lg navbar-custom sticky-top">

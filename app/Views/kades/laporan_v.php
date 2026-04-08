@@ -25,20 +25,29 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (!empty($arsip)) : ?>
-                        <?php $no=1; foreach ($arsip as $a) : ?>
-                        <tr>
-                            <td><?= $no++ ?></td>
-                            <td><span class="fw-bold"><?= $a['judul_kegiatan'] ?></span></td>
-                            <td>Rp <?= number_format((float)$a['anggaran'], 0, ',', '.') ?></td>
-                            <td><?= date('d M Y', strtotime($a['tanggal_persetujuan'])) ?></td>
-                            <td><span class="badge bg-success">Selesai di ACC</span></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php else : ?>
-                        <tr><td colspan="5" class="text-center py-4">Belum ada riwayat.</td></tr>
-                    <?php endif; ?>
-                </tbody>
+                <?php if (!empty($arsip)) : ?>
+                    <?php $no=1; foreach ($arsip as $a) : ?>
+                    <tr>
+                        <td><?= $no++ ?></td>
+                        <td>
+                            <span class="fw-bold">
+                                <?= $a['judul_kegiatan'] ?? 'ID Kegiatan: '.$a['kegiatan_id'] ?>
+                            </span>
+                        </td>
+                        <td>Rp <?= number_format((float)$a['anggaran'], 0, ',', '.') ?></td>
+                        <td><?= date('d M Y', strtotime($a['tanggal_persetujuan'])) ?></td>
+                        <td><span class="badge bg-success">Disetujui</span></td>
+                    </tr>
+                    <?php endforeach; ?>
+                <?php else : ?>
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <i class="fas fa-folder-open fa-3x d-block mb-3 opacity-25"></i>
+                            Belum ada riwayat kegiatan yang disetujui.
+                        </td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
             </table>
         </div>
     </div>

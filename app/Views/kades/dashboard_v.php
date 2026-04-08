@@ -5,40 +5,48 @@
 
 <div class="row mb-4">
     <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-0 shadow-sm" style="border-radius: 15px; border-left: 5px solid #10b981;">
+        <div class="card border-0 shadow-sm h-100 py-2" style="border-radius: 15px; border-left: 5px solid #10b981;">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Kegiatan</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $total_kegiatan ?></div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-calendar fa-2x text-gray-300"></i></div>
+                    <div class="col-auto">
+                        <i class="fas fa-list-check fa-2x text-gray-300"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-0 shadow-sm" style="border-radius: 15px; border-left: 5px solid #f6c23e;">
+        <div class="card border-0 shadow-sm h-100 py-2" style="border-radius: 15px; border-left: 5px solid #f6c23e;">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Menunggu ACC</div>
                         <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $total_pending ?></div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-clock fa-2x text-gray-300"></i></div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-signature fa-2x text-gray-300"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-0 shadow-sm" style="border-radius: 15px; border-left: 5px solid #e74a3b;">
+        <div class="card border-0 shadow-sm h-100 py-2" style="border-radius: 15px; border-left: 5px solid #3b82f6;">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Verifikasi User</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800"><?= $user_pending ?></div>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Anggaran</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Rp <?= number_format($total_anggaran, 0, ',', '.') ?></div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-user-check fa-2x text-gray-300"></i></div>
+                    <div class="col-auto">
+                        <i class="fas fa-coins fa-2x text-gray-300"></i>
+                    </div>
                 </div>
             </div>
         </div>

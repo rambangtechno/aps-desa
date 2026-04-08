@@ -63,13 +63,12 @@
                                             '<?= htmlspecialchars($k['foto'], ENT_QUOTES) ?>', 
                                             '<?= $k['tanggal'] ?>', 
                                             '<?= htmlspecialchars($k['lokasi'], ENT_QUOTES) ?>', 
-                                            '<?= number_format((float)$k['anggaran'], 0, ',', '.') ?>'
+                                            '<?= number_format((float)$k['anggaran'], 0, ',', '.') ?>',
                                             '<?= $k['latitude'] ?>',
                                             '<?= $k['longitude'] ?>'
                                         )">
                                         <i class="fas fa-eye"></i>
                                     </button>
-                                    
                                     <button class="btn btn-warning btn-sm text-white rounded-circle me-1" data-bs-toggle="modal" data-bs-target="#modalEdit<?= $k['kegiatan_id'] ?>">
                                         <i class="fas fa-edit"></i>
                                     </button>
@@ -208,7 +207,6 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Variable global untuk menyimpan instance map agar tidak double init
     var editMaps = {};
 
     <?php foreach ($kegiatan as $k) : ?>
@@ -216,49 +214,49 @@
         const id = "<?= $k['kegiatan_id'] ?>";
         const containerId = 'mapEdit-' + id;
         
-        // Ambil data koordinat lama
         let oldLat = document.getElementById('latEdit-' + id).value;
         let oldLng = document.getElementById('lngEdit-' + id).value;
-
-        // Tentukan titik tengah (jika kosong pakai Sambas)
         let latlng = (oldLat && oldLng) ? [parseFloat(oldLat), parseFloat(oldLng)] : [1.3622, 109.3117];
 
-        // Hancurkan map lama jika sudah ada (mencegah error "map already initialized")
         if (editMaps[id]) {
             editMaps[id].remove();
         }
 
-        // Inisialisasi Map Baru
-        editMaps[id] = L.map(containerId).setView(latlng, 15);
+        // 1. Definisi Layer khusus modal Edit
+        var osmEdit = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        var satelitEdit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri' });
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(editMaps[id]);
+        // 2. Inisialisasi Map
+        editMaps[id] = L.map(containerId, {
+            center: latlng,
+            zoom: 15,
+            layers: [osmEdit]
+        });
 
-        // Buat Marker yang bisa ditarik (Draggable)
-        let marker = L.marker(latlng, {
-            draggable: true
-        }).addTo(editMaps[id]);
+        // 3. Tambah Kontrol Pilihan Map
+        var baseMapsEdit = {
+            "Default (Jalan)": osmEdit,
+            "Satelit": satelitEdit
+        };
+        L.control.layers(baseMapsEdit).addTo(editMaps[id]);
 
-        // Fungsi Update Input Field
+        let marker = L.marker(latlng, { draggable: true }).addTo(editMaps[id]);
+
         function updateFields(lat, lng) {
             document.getElementById('latEdit-' + id).value = lat.toFixed(7);
             document.getElementById('lngEdit-' + id).value = lng.toFixed(7);
         }
 
-        // Kejadian saat Marker digeser
         marker.on('dragend', function(event) {
             let pos = marker.getLatLng();
             updateFields(pos.lat, pos.lng);
         });
 
-        // Kejadian saat Peta diklik
         editMaps[id].on('click', function(e) {
             marker.setLatLng(e.latlng);
             updateFields(e.latlng.lat, e.latlng.lng);
         });
 
-        // PAKSA MUNCUL: Invalidate size setelah animasi modal selesai
         setTimeout(() => {
             editMaps[id].invalidateSize();
         }, 400);
@@ -269,15 +267,30 @@
     var map;
     var marker;
 
-    // Inisialisasi Peta saat Modal dibuka
     document.getElementById('modalTambah').addEventListener('shown.bs.modal', function () {
         if (!map) {
-            // Koordinat default: Sambas (-1.17, 109.30) atau sesuaikan dengan Desa Segarau Parit
-            map = L.map('mapPicker').setView([1.3622, 109.3117], 13); 
+            // 1. Definisi Layer
+            var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            });
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap'
-            }).addTo(map);
+            var satelit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles © Esri'
+            });
+
+            // 2. Inisialisasi Peta
+            map = L.map('mapPicker', {
+                center: [1.3622, 109.3117],
+                zoom: 13,
+                layers: [osm] // Default
+            });
+
+            // 3. Tambah Kontrol Pilihan Map
+            var baseMaps = {
+                "Default (Jalan)": osm,
+                "Satelit": satelit
+            };
+            L.control.layers(baseMaps).addTo(map);
 
             map.on('click', function(e) {
                 var lat = e.latlng.lat;
@@ -289,21 +302,21 @@
                     marker = L.marker(e.latlng).addTo(map);
                 }
 
-                document.getElementById('latInput').value = lat;
-                document.getElementById('lngInput').value = lng;
+                document.getElementById('latInput').value = lat.toFixed(7);
+                document.getElementById('lngInput').value = lng.toFixed(7);
             });
         }
-        map.invalidateSize(); // Perbaiki tampilan peta yang kadang abu-abu
+        map.invalidateSize();
     });
 </script>
 <script>
-function previewLengkap(judul, deskripsi, fotoRaw, tanggal, lokasi, anggaran) {
+function previewLengkap(judul, deskripsi, fotoRaw, tanggal, lokasi, anggaran, lat, lng) {
     let htmlFoto = '';
     try {
         let daftarFoto = JSON.parse(fotoRaw);
         if (Array.isArray(daftarFoto) && daftarFoto.length > 0) {
             daftarFoto.forEach((img) => {
-                htmlFoto += `<img src="<?= base_url('uploads/kegiatan/') ?>/${img}" class="img-fluid rounded mb-3 border shadow-sm" style="width: 100%; object-fit: cover;">`;
+                htmlFoto += `<img src="<?= base_url('uploads/kegiatan/') ?>/${img}" class="img-fluid rounded mb-3 border shadow-sm" style="width: 100%; height: 250px; object-fit: cover;">`;
             });
         }
     } catch (e) {
@@ -314,23 +327,36 @@ function previewLengkap(judul, deskripsi, fotoRaw, tanggal, lokasi, anggaran) {
         }
     }
 
+    // Link Google Maps
+    let gmapsLink = (lat && lng) ? `https://www.google.com/maps?q=${lat},${lng}` : '#';
+
     Swal.fire({
         title: '<span class="fw-bold">' + judul + '</span>',
         html: `
-            <div class="text-start mt-2" style="max-height: 500px; overflow-y: auto;">
+            <div class="text-start mt-2" style="max-height: 500px; overflow-y: auto; overflow-x: hidden;">
                 ${htmlFoto}
                 <div class="row g-2 mb-3">
-                    <div class="col-6"><div class="p-2 border rounded bg-light small"><b>TANGGAL:</b> ${tanggal}</div></div>
-                    <div class="col-6"><div class="p-2 border rounded bg-light small"><b>LOKASI:</b> ${lokasi}</div></div>
+                    <div class="col-6"><div class="p-2 border rounded bg-light small"><b>TANGGAL:</b><br>${tanggal}</div></div>
+                    <div class="col-6"><div class="p-2 border rounded bg-light small"><b>LOKASI:</b><br>${lokasi}</div></div>
                 </div>
-                <div class="p-2 border rounded mb-3 bg-primary-subtle"><b class="small text-muted">ANGGARAN:</b> <span class="text-primary fw-bold">Rp ${anggaran}</span></div>
-                <div class="small p-1 text-secondary"><b>DESKRIPSI:</b><br>${deskripsi || '-'}</div>
+                <div class="p-2 border rounded mb-3 bg-primary-subtle text-center">
+                    <b class="small text-muted text-uppercase">Anggaran:</b><br>
+                    <span class="text-primary fw-bold h5">Rp ${anggaran}</span>
+                </div>
+                <div class="mb-3 small p-2 border rounded bg-white">
+                    <b>DESKRIPSI:</b><br>${deskripsi || '-'}
+                </div>
+                ${(lat && lng) ? `
+                <a href="${gmapsLink}" target="_blank" class="btn btn-outline-success btn-sm w-100 rounded-pill">
+                    <i class="fas fa-map-marker-alt me-1"></i> Lihat Lokasi di Google Maps
+                </a>` : ''}
             </div>
         `,
-        width: '550px', confirmButtonText: 'Tutup', confirmButtonColor: '#1e293b'
+        width: '550px', 
+        confirmButtonText: 'Tutup', 
+        confirmButtonColor: '#1e293b'
     });
 }
-
 function hapusKegiatan(id) {
     Swal.fire({
         title: 'Hapus?', text: "Data tidak bisa dikembalikan!", icon: 'warning',

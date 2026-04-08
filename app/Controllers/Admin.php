@@ -23,26 +23,32 @@ class Admin extends BaseController
         }
     }
 
-    // 1. Menampilkan Halaman Dashboard Utama Admin
+// 1. Menampilkan Halaman Dashboard Utama Admin
 public function index()
 {
     $db = \Config\Database::connect();
     
     $data = [
         'title'          => 'Dashboard Admin',
-        // Data untuk Peta GIS
+        
+        // Data untuk Peta GIS (Hanya ambil yang koordinatnya lengkap)
         'kegiatan_map'   => $db->table('kegiatan')
                                ->where('latitude !=', null)
+                               ->where('longitude !=', null)
                                ->get()->getResultArray(),
-        // Data Statistik Dashboard
-        'total_kegiatan' => $this->kegiatanModel->countAll(),
-        'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAll(),
-        'user_pending'   => $this->userModel->where('is_active', 0)->countAll(),
+
+        // Data Statistik Dashboard (Realtime)
+        'total_kegiatan' => $this->kegiatanModel->countAllResults(),
+        
+        // Hitung yang statusnya Pending
+        'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAllResults(),
+        
+        // Hitung User yang belum aktif (is_active = 0)
+        'user_pending'   => $this->userModel->where('is_active', 0)->countAllResults(),
     ];
 
     return view('admin/dashboard_v', $data);
 }
-
     // 2. Menampilkan Daftar Kegiatan Desa
     public function kegiatan()
     {

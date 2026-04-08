@@ -46,5 +46,10 @@ $routes->post('admin/proses_cetak', 'Admin::proses_cetak');
 
 $routes->get('admin/print_laporan', 'Admin::print_laporan');// Halaman preview cetak (tab baru)// Untuk memproses formnya nanti
 $routes->get('admin/sebaran_kegiatan', 'Admin::sebaran_kegiatan');
+
+$routes->get('kades/riwayat', 'Kades::riwayat');
+$routes->get('kades/setujui/(:num)', 'Kades::setujui/$1'); // Untuk proses TTD/ACC
+
+$routes->get('kades/persetujuan', 'Kades::persetujuan');
 // Tambahkan ini di Routes.php
 $routes->get('auth/logout', 'Auth::logout');
