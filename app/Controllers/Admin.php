@@ -24,17 +24,24 @@ class Admin extends BaseController
     }
 
     // 1. Menampilkan Halaman Dashboard Utama Admin
-    public function index()
-    {
-        $data = [
-            'title'          => 'Dashboard Admin',
-            'total_kegiatan' => $this->kegiatanModel->countAll(),
-            'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAll(),
-            'user_pending'   => $this->userModel->where('is_active', 0)->countAll(),
-        ];
+public function index()
+{
+    $db = \Config\Database::connect();
+    
+    $data = [
+        'title'          => 'Dashboard Admin',
+        // Data untuk Peta GIS
+        'kegiatan_map'   => $db->table('kegiatan')
+                               ->where('latitude !=', null)
+                               ->get()->getResultArray(),
+        // Data Statistik Dashboard
+        'total_kegiatan' => $this->kegiatanModel->countAll(),
+        'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAll(),
+        'user_pending'   => $this->userModel->where('is_active', 0)->countAll(),
+    ];
 
-        return view('admin/dashboard_v', $data);
-    }
+    return view('admin/dashboard_v', $data);
+}
 
     // 2. Menampilkan Daftar Kegiatan Desa
     public function kegiatan()
@@ -268,5 +275,17 @@ public function print_laporan()
     ];
 
     return view('admin/cetak_laporan_resmi', $data);
+}
+
+public function sebaran_kegiatan()
+{
+    $db = \Config\Database::connect();
+    // Ambil kegiatan yang sudah disetujui dan memiliki koordinat
+    $data['kegiatan'] = $db->table('kegiatan')
+                           ->where('latitude !=', null)
+                           ->get()->getResultArray();
+    
+    $data['title'] = "Sebaran Lokasi Kegiatan";
+    return view('admin/sebaran_v', $data);
 }
 }

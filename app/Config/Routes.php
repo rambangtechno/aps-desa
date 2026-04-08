@@ -45,6 +45,6 @@ $routes->get('admin/form_cetak', 'Admin::form_cetak');      // Halaman pilih kad
 $routes->post('admin/proses_cetak', 'Admin::proses_cetak'); 
 
 $routes->get('admin/print_laporan', 'Admin::print_laporan');// Halaman preview cetak (tab baru)// Untuk memproses formnya nanti
-
+$routes->get('admin/sebaran_kegiatan', 'Admin::sebaran_kegiatan');
 // Tambahkan ini di Routes.php
 $routes->get('auth/logout', 'Auth::logout');
