@@ -421,82 +421,175 @@ public function blast()
 {
     $db = \Config\Database::connect();
     
+    // Ambil daftar dusun yang unik dari tabel penduduk
+    $list_dusun = $db->table('penduduk')
+                     ->select('dusun')
+                     ->groupBy('dusun')
+                     ->get()
+                     ->getResultArray();
+
     $data = [
         'title'          => 'WA Blast Notifikasi',
         'kegiatan'       => $db->table('kegiatan')->where('status', 'Disetujui')->get()->getResultArray(),
         'total_penerima' => $db->table('penduduk')->where('status_aktif', 'Ya')->countAllResults(),
-        // Kirim data riwayat dari sini
-        'riwayat'        => $db->table('riwayat_blast')->orderBy('id_blast', 'DESC')->limit(5)->get()->getResultArray()
+        'riwayat'        => $db->table('riwayat_blast')->orderBy('id_blast', 'DESC')->limit(5)->get()->getResultArray(),
+        'list_dusun'     => $list_dusun // Kirim data dusun ke view
     ];
 
     return view('admin/blast_v', $data);
+}
+// public function proses_blast()
+// {
+//     $db = \Config\Database::connect();
+//     $pesan = $this->request->getPost('pesan');
+//     $judul = $this->request->getPost('judul');
+
+//     // 1. Ambil data nomor WA warga yang aktif
+//     $warga = $db->table('penduduk')->where('status_aktif', 'Ya')->get()->getResultArray();
+    
+//     if (empty($warga)) {
+//         return $this->response->setJSON(['status' => 'error', 'msg' => 'Tidak ada nomor penduduk aktif di database.']);
+//     }
+
+//     // 2. Bersihkan nomor (Pastikan hanya angka)
+//     $nomor_list = [];
+//     foreach ($warga as $w) {
+//         // Hapus karakter non-angka agar Fonnte tidak bingung
+//         $clean_number = preg_replace('/[^0-9]/', '', $w['no_wa']);
+//         if (!empty($clean_number)) {
+//             $nomor_list[] = $clean_number;
+//         }
+//     }
+//     $target = implode(',', $nomor_list);
+
+//     // 3. Setting API Fonnte
+//     $token = "ApiJLBggZ7zuQMTokTds"; 
+    
+//     $curl = curl_init();
+//     curl_setopt_array($curl, array(
+//       CURLOPT_URL => 'https://api.fonnte.com/send',
+//       CURLOPT_RETURNTRANSFER => true,
+//       CURLOPT_ENCODING => "",
+//       CURLOPT_MAXREDIRS => 10,
+//       CURLOPT_TIMEOUT => 0,
+//       CURLOPT_FOLLOWLOCATION => true,
+//       CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+//       CURLOPT_CUSTOMREQUEST => 'POST',
+//       // Gunakan http_build_query agar pengiriman data lebih stabil di beberapa server
+//       CURLOPT_POSTFIELDS => http_build_query(array(
+//         'target'      => $target,
+//         'message'     => $pesan, 
+//         'delay'       => '2', 
+//         'countryCode' => '62', 
+//       )),
+//       CURLOPT_HTTPHEADER => array(
+//         "Authorization: $token",
+//         "Content-Type: application/x-www-form-urlencoded"
+//       ),
+//     ));
+
+//     $response = curl_exec($curl);
+//     $err = curl_error($curl);
+//     curl_close($curl);
+    
+//     // 4. Analisis Hasil Response
+//     if ($err) {
+//         return $this->response->setJSON(['status' => 'error', 'msg' => 'Masalah Koneksi Server (cURL): ' . $err]);
+//     }
+
+//     $result = json_decode($response, true);
+
+//     // 5. Cek Status Respon Fonnte
+//     if (isset($result['status']) && $result['status'] == true) {
+//         // BERHASIL: Simpan ke RIWAYAT_BLAST
+//         $db->table('riwayat_blast')->insert([
+//             'judul_kegiatan'    => $judul,
+//             'isi_pesan'         => $pesan,
+//             'total_penerima'    => count($nomor_list),
+//             'dikirim_oleh'      => session()->get('nama_lengkap') ?? 'Admin',
+//             'status_pengiriman' => 'Selesai',
+//             'created_at'        => date('Y-m-d H:i:s')
+//         ]);
+
+//         return $this->response->setJSON([
+//             'status' => 'success',
+//             'total'  => count($nomor_list)
+//         ]);
+//     } else {
+//         // GAGAL: Tangkap pesan error spesifik dari Fonnte
+//         // Jika token salah, akan muncul "invalid token". Jika WA mati, muncul "device disconnected".
+//         $pesan_error = $result['reason'] ?? ($result['detail'] ?? 'API Fonnte menolak permintaan.');
+        
+//         return $this->response->setJSON([
+//             'status' => 'error',
+//             'msg'    => 'Fonnte Error: ' . $pesan_error
+//         ]);
+//     }
+// }
+public function hitung_target_dusun()
+{
+    $db = \Config\Database::connect();
+    $dusun = $this->request->getPost('dusun');
+
+    $builder = $db->table('penduduk')->where('status_aktif', 'Ya');
+    
+    if ($dusun != 'Semua') {
+        $builder->where('dusun', $dusun);
+    }
+
+    $jumlah = $builder->countAllResults();
+
+    return $this->response->setJSON(['jumlah' => $jumlah]);
 }
 public function proses_blast()
 {
     $db = \Config\Database::connect();
     $pesan = $this->request->getPost('pesan');
     $judul = $this->request->getPost('judul');
+    $dusun = $this->request->getPost('dusun');
+    $delay = $this->request->getPost('delay'); // Tangkap delay dari HTML
 
-    // 1. Ambil data nomor WA warga yang aktif
-    $warga = $db->table('penduduk')->where('status_aktif', 'Ya')->get()->getResultArray();
-    
+    // Filter Penduduk
+    $builder = $db->table('penduduk')->where('status_aktif', 'Ya');
+    if ($dusun != 'Semua') {
+        $builder->where('dusun', $dusun);
+    }
+    $warga = $builder->get()->getResultArray();
+
     if (empty($warga)) {
-        return $this->response->setJSON(['status' => 'error', 'msg' => 'Tidak ada nomor penduduk aktif di database.']);
+        return $this->response->setJSON(['status' => 'error', 'msg' => 'Tidak ada nomor aktif.']);
     }
 
-    // 2. Bersihkan nomor (Pastikan hanya angka)
     $nomor_list = [];
     foreach ($warga as $w) {
-        // Hapus karakter non-angka agar Fonnte tidak bingung
-        $clean_number = preg_replace('/[^0-9]/', '', $w['no_wa']);
-        if (!empty($clean_number)) {
-            $nomor_list[] = $clean_number;
-        }
+        $nomor_list[] = preg_replace('/[^0-9]/', '', $w['no_wa']);
     }
     $target = implode(',', $nomor_list);
 
-    // 3. Setting API Fonnte
+    // API Fonnte
     $token = "ApiJLBggZ7zuQMTokTds"; 
-    
     $curl = curl_init();
     curl_setopt_array($curl, array(
-      CURLOPT_URL => 'https://api.fonnte.com/send',
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_ENCODING => "",
-      CURLOPT_MAXREDIRS => 10,
-      CURLOPT_TIMEOUT => 0,
-      CURLOPT_FOLLOWLOCATION => true,
-      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-      CURLOPT_CUSTOMREQUEST => 'POST',
-      // Gunakan http_build_query agar pengiriman data lebih stabil di beberapa server
-      CURLOPT_POSTFIELDS => http_build_query(array(
-        'target'      => $target,
-        'message'     => $pesan, 
-        'delay'       => '2', 
-        'countryCode' => '62', 
-      )),
-      CURLOPT_HTTPHEADER => array(
-        "Authorization: $token",
-        "Content-Type: application/x-www-form-urlencoded"
-      ),
+        CURLOPT_URL => 'https://api.fonnte.com/send',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS => array(
+            'target'      => $target,
+            'message'     => $pesan, 
+            'delay'       => $delay, // Gunakan delay dinamis dari input user
+            'countryCode' => '62', 
+        ),
+        CURLOPT_HTTPHEADER => array("Authorization: $token"),
     ));
 
     $response = curl_exec($curl);
-    $err = curl_error($curl);
+    $res = json_decode($response, true);
     curl_close($curl);
-    
-    // 4. Analisis Hasil Response
-    if ($err) {
-        return $this->response->setJSON(['status' => 'error', 'msg' => 'Masalah Koneksi Server (cURL): ' . $err]);
-    }
 
-    $result = json_decode($response, true);
-
-    // 5. Cek Status Respon Fonnte
-    if (isset($result['status']) && $result['status'] == true) {
-        // BERHASIL: Simpan ke RIWAYAT_BLAST
+    if (isset($res['status']) && $res['status'] == true) {
+        // Simpan riwayat
         $db->table('riwayat_blast')->insert([
-            'judul_kegiatan'    => $judul,
+            'judul_kegiatan'    => $judul . " ($dusun)",
             'isi_pesan'         => $pesan,
             'total_penerima'    => count($nomor_list),
             'dikirim_oleh'      => session()->get('nama_lengkap') ?? 'Admin',
@@ -504,19 +597,9 @@ public function proses_blast()
             'created_at'        => date('Y-m-d H:i:s')
         ]);
 
-        return $this->response->setJSON([
-            'status' => 'success',
-            'total'  => count($nomor_list)
-        ]);
+        return $this->response->setJSON(['status' => 'success', 'total' => count($nomor_list)]);
     } else {
-        // GAGAL: Tangkap pesan error spesifik dari Fonnte
-        // Jika token salah, akan muncul "invalid token". Jika WA mati, muncul "device disconnected".
-        $pesan_error = $result['reason'] ?? ($result['detail'] ?? 'API Fonnte menolak permintaan.');
-        
-        return $this->response->setJSON([
-            'status' => 'error',
-            'msg'    => 'Fonnte Error: ' . $pesan_error
-        ]);
+        return $this->response->setJSON(['status' => 'error', 'msg' => $res['reason'] ?? 'Gagal kirim.']);
     }
 }
 public function simpan_riwayat_blast()

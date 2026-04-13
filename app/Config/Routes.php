@@ -64,6 +64,8 @@ $routes->get('admin/penduduk', 'Admin::penduduk');
 $routes->post('admin/penduduk_simpan', 'Admin::penduduk_simpan');
 $routes->get('admin/penduduk_hapus/(:num)', 'Admin::penduduk_hapus/$1');
 
+$routes->post('admin/hitung_target_dusun', 'Admin::hitung_target_dusun');
+
 $routes->get('admin/blast', 'Admin::blast');
 $routes->post('admin/proses_blast', 'Admin::proses_blast');
 // Tambahkan ini di Routes.php

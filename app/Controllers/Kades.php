@@ -22,21 +22,47 @@ class Kades extends BaseController
         }
     }
 
-    public function index()
-    {
-        $total_anggaran = $this->kegiatanModel->selectSum('anggaran')->get()->getRow()->anggaran ?? 0;
+    // public function index()
+    // {
+    //     $total_anggaran = $this->kegiatanModel->selectSum('anggaran')->get()->getRow()->anggaran ?? 0;
 
-        $data = [
-            'title'          => 'Dashboard Kepala Desa',
-            'total_kegiatan' => $this->kegiatanModel->countAllResults(),
-            'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAllResults(),
-            'total_anggaran' => $total_anggaran,
-            'kegiatan_map'   => $this->kegiatanModel->where('latitude !=', null)->findAll(),
-        ];
+    //     $data = [
+    //         'title'          => 'Dashboard Kepala Desa',
+    //         'total_kegiatan' => $this->kegiatanModel->countAllResults(),
+    //         'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAllResults(),
+    //         'total_anggaran' => $total_anggaran,
+    //         'kegiatan_map'   => $this->kegiatanModel->where('latitude !=', null)->findAll(),
+    //     ];
 
-        return view('kades/dashboard_v', $data);
-    }
+    //     return view('kades/dashboard_v', $data);
+    // }
+   public function index()
+{
+    $db = \Config\Database::connect();
+    
+    // 1. Ambil data peta (Variabel ini sering lupa dikirim sehingga Map error)
+    $kegiatan_map = $db->table('kegiatan')
+                       ->where('latitude !=', null)
+                       ->where('longitude !=', null)
+                       ->get()->getResultArray();
 
+    // 2. Hitung Total Anggaran Disetujui
+    $query_anggaran = $db->table('kegiatan')
+                         ->selectSum('anggaran')
+                         ->where('status', 'Disetujui')
+                         ->get()
+                         ->getRowArray();
+
+    $data = [
+        'title'          => 'Dashboard Kepala Desa',
+        'total_kegiatan' => $db->table('kegiatan')->countAllResults(),
+        'total_pending'  => $db->table('kegiatan')->where('status', 'Pending')->countAllResults(),
+        'total_anggaran' => $query_anggaran['anggaran'] ?? 0, // Pastikan namanya sama dengan di view
+        'kegiatan_map'   => $kegiatan_map, // Jangan lupa kirim ini untuk Leaflet Map
+    ];
+
+    return view('kades/dashboard_v', $data);
+}
     public function persetujuan()
     {
         $data = [

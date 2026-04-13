@@ -20,45 +20,52 @@ class Auth extends BaseController
     }
 
     public function loginProcess()
-    {
-        $session = session();
-        $model = new UserModel();
+{
+    $session = session();
+    $model = new UserModel();
 
-        $username = $this->request->getVar('username');
-        $password = $this->request->getVar('password');
+    $username = $this->request->getVar('username');
+    $password = $this->request->getVar('password');
 
-        if (empty($username) || empty($password)) {
-            return redirect()->back()->with('error', 'Username dan Password wajib diisi!');
-        }
-
-        $user = $model->where('username', $username)->first();
-
-        if ($user) {
-            if (password_verify($password, $user['password'])) {
-                
-                // Cek Status Aktivasi
-                if ($user['is_active'] == 0) {
-                    return redirect()->back()->with('error', 'Akun Anda belum diverifikasi oleh Admin Desa.');
-                }
-
-                $session->set([
-                    'id'         => $user['id'],
-                    'username'   => $user['username'],
-                    'nama'       => $user['nama_lengkap'],
-                    'role'       => $user['role'],
-                    'logged_in'  => true,
-                ]);
-
-                return redirect()->to('/admin')->with('success', 'Selamat Datang Kembali, ' . $user['nama_lengkap'] . '!');
-                
-            } else {
-                return redirect()->back()->with('error', 'Password salah.');
-            }
-        } else {
-            return redirect()->back()->with('error', 'Username tidak terdaftar.');
-        }
+    if (empty($username) || empty($password)) {
+        return redirect()->back()->with('error', 'Username dan Password wajib diisi!');
     }
 
+    $user = $model->where('username', $username)->first();
+
+    if ($user) {
+        if (password_verify($password, $user['password'])) {
+            
+            // 1. Cek Status Aktivasi
+            if ($user['is_active'] == 0) {
+                return redirect()->back()->with('error', 'Akun Anda belum diverifikasi oleh Admin Desa.');
+            }
+
+            // 2. Simpan Data ke Session
+            $session->set([
+                'id'         => $user['id'],
+                'username'   => $user['username'],
+                'nama'       => $user['nama_lengkap'],
+                'role'       => $user['role'],
+                'logged_in'  => true,
+            ]);
+
+            // 3. LOGIKA REDIRECT BERDASARKAN ROLE kepala_desa
+            if ($user['role'] == 'admin') {
+                return redirect()->to(base_url('admin'))->with('success', 'Selamat Datang Admin!');
+            } elseif ($user['role'] == 'kepala_desa') { // Pastikan sama dengan di database
+                return redirect()->to(base_url('kades'))->with('success', 'Selamat Datang Bapak Kepala Desa!');
+            } else {
+                return redirect()->to(base_url('/'))->with('error', 'Role tidak dikenali.');
+            }
+            
+        } else {
+            return redirect()->back()->with('error', 'Password salah.');
+        }
+    } else {
+        return redirect()->back()->with('error', 'Username tidak terdaftar.');
+    }
+}
     public function registerProcess()
     {
         $model = new UserModel();

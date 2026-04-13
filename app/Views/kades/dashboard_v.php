@@ -37,20 +37,24 @@
     </div>
 
     <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-0 shadow-sm h-100 py-2" style="border-radius: 15px; border-left: 5px solid #3b82f6;">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Anggaran</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">Rp <?= number_format($total_anggaran, 0, ',', '.') ?></div>
+    <div class="card border-0 shadow-sm h-100 py-2" style="border-radius: 15px; border-left: 5px solid #198754;">
+        <div class="card-body">
+            <div class="row no-gutters align-items-center">
+                <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                        Total Anggaran Disetujui
                     </div>
-                    <div class="col-auto">
-                        <i class="fas fa-coins fa-2x text-gray-300"></i>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">
+                        Rp <?= number_format($total_anggaran, 0, ',', '.') ?>
                     </div>
+                </div>
+                <div class="col-auto">
+                    <i class="fas fa-coins fa-2x text-gray-300"></i>
                 </div>
             </div>
         </div>
     </div>
+</div>
 </div>
 
 <div class="row">

@@ -9,7 +9,7 @@
             </div>
             <div class="card-body">
                 <form id="formBlast">
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="small fw-bold text-muted mb-2">PILIH KEGIATAN</label>
                         <select class="form-select border-success-subtle py-2 shadow-none" id="pilihKegiatan" required>
                             <option value="" data-lokasi="" data-anggaran="" data-tgl="">-- Pilih Kegiatan --</option>
@@ -24,12 +24,32 @@
                         </select>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="small fw-bold text-muted mb-2">TARGET DUSUN</label>
+                        <select class="form-select border-success-subtle py-2 shadow-none" id="filterDusun">
+                            <option value="Semua">-- Semua Dusun --</option>
+                            <?php foreach($list_dusun as $d): ?>
+                                <?php if(!empty($d['dusun'])): ?>
+                                    <option value="<?= $d['dusun'] ?>"><?= $d['dusun'] ?></option>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="small fw-bold text-muted mb-2">JEDA ANTAR PESAN (DETIK)</label>
+                        <div class="input-group">
+                            <input type="number" id="inputDelay" class="form-control border-success-subtle shadow-none" value="10" min="1">
+                            <span class="input-group-text bg-success-subtle text-success border-success-subtle">Detik</span>
+                        </div>
+                        <small class="text-muted text-xs">*Berikan delay per pesan, agar tidak terdeteksi bot.</small>
+                    </div>
+
                     <div class="alert alert-info border-0 rounded-4 mb-4">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-users fa-2x me-3 opacity-50"></i>
                             <div>
                                 <p class="mb-0 small fw-bold">Target Penerima:</p>
-                                <h5 class="mb-0 fw-800"><?= $total_penerima ?> Nomor WhatsApp Aktif</h5>
+                                <h5 class="mb-0 fw-800"><span id="jumlahTarget"><?= $total_penerima ?></span> Nomor WhatsApp Aktif</h5>
                             </div>
                         </div>
                     </div>
@@ -101,7 +121,31 @@
 </div>
 
 <script>
-// 1. Logika Live Preview (Sudah Bagus)
+    document.getElementById('filterDusun').addEventListener('change', function() {
+    const dusun = this.value;
+    const targetSpan = document.getElementById('jumlahTarget');
+
+    // Beri efek loading sementara
+    targetSpan.innerText = '...';
+
+    fetch('<?= base_url('admin/hitung_target_dusun') ?>', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest' 
+        },
+        body: `dusun=${encodeURIComponent(dusun)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        targetSpan.innerText = data.jumlah;
+    })
+    .catch(err => {
+        targetSpan.innerText = '0';
+        console.error('Gagal mengambil data target:', err);
+    });
+});
+// 1. Live Preview Logic
 document.getElementById('pilihKegiatan').addEventListener('change', function() {
     const judul = this.value;
     const lokasi = this.options[this.selectedIndex].getAttribute('data-lokasi');
@@ -124,60 +168,41 @@ document.getElementById('pilihKegiatan').addEventListener('change', function() {
     }
 });
 
-// 2. LOGIKA KIRIM BLAST (Beneran Kirim ke Fonnte)
+// Di dalam event listener btnBlast
 document.getElementById('btnBlast').addEventListener('click', function() {
     const pesan = document.getElementById('textPreview').innerText;
     const judul = document.getElementById('pilihKegiatan').value;
+    const dusun = document.getElementById('filterDusun').value;
+    const delay = document.getElementById('inputDelay').value; // Ambil nilai delay
 
     if (judul === "") {
-        Swal.fire('Pilih Kegiatan!', 'Pilih dulu kegiatan yang mau di-blast.', 'warning');
+        Swal.fire('Pilih Kegiatan!', 'Pilih dulu kegiatan.', 'warning');
         return;
     }
 
     Swal.fire({
         title: 'Konfirmasi Blast?',
-        text: "Pesan akan dikirim ke <?= $total_penerima ?> nomor warga via Fonnte.",
+        text: `Kirim ke Dusun ${dusun} dengan jeda ${delay} detik per pesan.`,
         icon: 'question',
         showCancelButton: true,
-        confirmButtonColor: '#198754',
-        confirmButtonText: 'Ya, Kirim Sekarang!',
-        cancelButtonText: 'Batal'
+        confirmButtonText: 'Ya, Kirim!'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Munculkan Loading saat kirim
-            Swal.fire({
-                title: 'Sedang Mengirim...',
-                html: 'Mohon jangan tutup halaman ini.',
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading() }
-            });
+            Swal.fire({ title: 'Memproses...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
 
-            // AJAX FETCH ke Controller Admin/proses_blast
             fetch('<?= base_url('admin/proses_blast') ?>', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest' 
-                },
-                body: `pesan=${encodeURIComponent(pesan)}&judul=${encodeURIComponent(judul)}`
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                // Tambahkan delay ke body
+                body: `pesan=${encodeURIComponent(pesan)}&judul=${encodeURIComponent(judul)}&dusun=${encodeURIComponent(dusun)}&delay=${delay}`
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: `Notifikasi terkirim ke ${data.total} warga.`,
-                        confirmButtonColor: '#10b981'
-                    }).then(() => {
-                        location.reload(); // Refresh agar riwayat terupdate
-                    });
+                    Swal.fire('Berhasil!', `Proses antrean ${data.total} pesan dimulai.`, 'success').then(() => { location.reload(); });
                 } else {
-                    Swal.fire('Gagal!', 'Gagal mengirim pesan via API Fonnte.', 'error');
+                    Swal.fire('Gagal!', data.msg, 'error');
                 }
-            })
-            .catch(err => {
-                Swal.fire('Error!', 'Koneksi ke server gagal.', 'error');
             });
         }
     });
