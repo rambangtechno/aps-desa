@@ -50,18 +50,24 @@
     $tgl_lap = $_GET['tgl_cetak'];
 ?>
     <div class="print-area bg-white p-5 shadow-sm mx-auto" style="max-width: 210mm; min-height: 297mm; border-radius: 5px; color: black !important;">
-        
-        <div class="row align-items-center border-bottom border-4 border-dark pb-2 mb-4">
-            <div class="col-2 text-center">
+    
+    <?php $desa = get_profil_desa(); // Ambil data dari helper ?>
+    
+    <div class="row align-items-center border-bottom border-4 border-dark pb-2 mb-4">
+        <div class="col-2 text-center">
+            <?php if (!empty($desa['logo']) && file_exists('uploads/profil/' . $desa['logo'])) : ?>
+                <img src="<?= base_url('uploads/profil/' . $desa['logo']) ?>" alt="Logo Desa" style="width: 80px; height: 80px; object-fit: contain;">
+            <?php else : ?>
                 <i class="fas fa-leaf fa-4x text-success"></i>
-            </div>
-            <div class="col-10 text-center">
-                <h4 class="fw-bold mb-0 text-uppercase">Pemerintah Kabupaten Sambas</h4>
-                <h5 class="fw-bold mb-0 text-uppercase">Kecamatan Tebas</h5>
-                <h3 class="fw-bold mb-1 text-uppercase text-success">Pemerintah Desa Segarau Parit</h3>
-                <small class="text-muted italic">Alamat: Jl. Raya Segarau Parit, Kode Pos 79461. Email: desasegarauparit@gmail.com</small>
-            </div>
+            <?php endif; ?>
         </div>
+        <div class="col-10 text-center">
+            <h4 class="fw-bold mb-0 text-uppercase">Pemerintah Kabupaten Sambas</h4>
+            <h5 class="fw-bold mb-0 text-uppercase">Kecamatan Tebas</h5>
+            <h3 class="fw-bold mb-1 text-uppercase text-success">Pemerintah Desa <?= $desa['nama_desa'] ?></h3>
+            <small class="text-muted italic">Alamat: <?= $desa['alamat'] ?>, Kode Pos 79461. Email: <?= $desa['email'] ?></small>
+        </div>
+    </div>
 
         <div class="text-center mb-4">
             <h5 class="fw-bold text-uppercase text-decoration-underline">Laporan Persetujuan Kegiatan Desa</h5>
@@ -119,25 +125,60 @@
 
 <style>
     @media screen {
-        .print-area { border: 1px solid #dee2e6; margin-top: 20px; }
+        .print-area { 
+            border: 1px solid #dee2e6; 
+            margin-top: 20px; 
+            background: #fff;
+        }
     }
     
     @media print {
-        body { background-color: white !important; }
-        .sidebar, .navbar-custom, .d-print-none, .btn, .footer, .sidebar-menu, .sidebar-label { 
+        /* Hapus Header & Footer bawaan browser (Tanggal, Judul, URL) */
+        @page { 
+            margin: 0; 
+            size: auto;
+        }
+
+        body { 
+            background-color: white !important; 
+            margin: 1.6cm; /* Memberikan margin manual agar konten tidak terpotong */
+        }
+
+        /* Sembunyikan elemen dashboard agar tidak ikut tercetak */
+        .sidebar, 
+        .navbar, 
+        .navbar-custom, 
+        .d-print-none, 
+        .sidebar-menu, 
+        .sidebar-label,
+        .btn-logout { 
             display: none !important; 
         }
-        .content { margin: 0 !important; padding: 0 !important; }
-        .section-container { padding: 0 !important; }
+
+        .content { 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            width: 100% !important;
+        }
+
+        .section-container { 
+            padding: 0 !important; 
+            margin: 0 !important;
+        }
+
         .print-area { 
             box-shadow: none !important; 
             margin: 0 !important; 
-            padding: 20px !important; 
+            padding: 0 !important; 
             width: 100% !important;
             border: none !important;
         }
-        .table-bordered td, .table-bordered th {
+
+        /* Pastikan tabel terlihat jelas saat di-print */
+        .table-bordered td, 
+        .table-bordered th {
             border: 1px solid black !important;
+            color: black !important;
         }
     }
 </style>

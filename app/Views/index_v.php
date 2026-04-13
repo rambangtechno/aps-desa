@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
         :root {
@@ -135,6 +137,38 @@
         footer h4 { color: #fff; font-weight: 700; margin-bottom: 25px; }
         .footer-links a { color: #a7f3d0; transition: 0.3s; }
         .footer-links a:hover { color: #fff; padding-left: 8px; }
+
+        /* GIS Section Styling */
+.gis-section { padding: 100px 0; background: #ffffff; }
+#mapLanding { 
+    height: 500px !important; 
+    width: 100%;
+    border-radius: 30px; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.05); 
+    border: 8px solid #f8fafc;
+    z-index: 1; /* Jangan terlalu tinggi agar tidak menutupi modal login */
+    overflow: hidden;
+}
+.leaflet-popup-content-wrapper {
+    border-radius: 15px;
+    padding: 5px;
+}
+.leaflet-popup-content b {
+    color: var(--digi-dark);
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+.popup-badge {
+    background: var(--digi-light);
+    color: var(--digi-green);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 5px;
+}
     </style>
 </head>
 <body>
@@ -379,6 +413,22 @@
     </div>
 </section>
 
+<section id="peta-sebaran" class="gis-section">
+    <div class="container" data-aos="fade-up">
+        <header class="text-center mb-5 pb-3">
+            <span class="badge px-3 py-2 rounded-pill mb-3" style="background: var(--digi-light); color: var(--digi-green); font-weight: 700;">GIS PEMBANGUNAN</span>
+            <h2 class="fw-bold" style="color: var(--digi-dark); font-size: 36px; letter-spacing: -1px;">Sebaran Kegiatan Desa</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">Pantau lokasi realisasi kegiatan pembangunan dan sosial di wilayah Desa Segarau Parit secara transparan.</p>
+        </header>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div id="mapLanding"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section id="profil-kades" class="kades-section">
     <div class="container" data-aos="fade-up">
         <div class="text-center mb-5 pb-3">
@@ -603,6 +653,102 @@
                 myModal.show();
             });
         <?php endif; ?>
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Cek elemen peta
+        const mapContainer = document.getElementById('mapLanding');
+        if (!mapContainer) return;
+
+        // 2. Inisialisasi Peta Utama (Titik Tengah Segarau Parit)
+        const mapLanding = L.map('mapLanding', {
+            scrollWheelZoom: false // Mencegah zoom tidak sengaja saat scroll halaman
+        }).setView([1.3622, 109.3117], 14);
+
+        // 3. Definisikan Pilihan Tipe Peta (Basemaps)
+        var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mapLanding); // Default tampilan awal
+
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        var terrainLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; OpenStreetMap, SRTM | Map style: &copy; OpenTopoMap'
+        });
+
+        // 4. Masukkan ke dalam Control Layer
+        var baseMaps = {
+            "<span style='font-size: 13px; font-weight: 600;'>Peta Jalan</span>": streetLayer,
+            "<span style='font-size: 13px; font-weight: 600;'>Citra Satelit</span>": satelliteLayer,
+            "<span style='font-size: 13px; font-weight: 600;'>Kontur/Terrain</span>": terrainLayer
+        };
+
+        L.control.layers(baseMaps, null, { position: 'topright' }).addTo(mapLanding);
+
+        // 5. Loop Data Marker dari Database
+        <?php if (!empty($kegiatan_map)) : ?>
+            <?php foreach ($kegiatan_map as $km) : ?>
+                <?php if ($km['latitude'] && $km['longitude']) : ?>
+                    
+                    var marker = L.marker([<?= $km['latitude'] ?>, <?= $km['longitude'] ?>]).addTo(mapLanding);
+                    
+                    marker.bindPopup(`
+                        <div style="width: 240px; font-family: 'Plus Jakarta Sans', sans-serif;">
+                            <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 12px; margin-bottom: 12px; background: #f1f5f9; position: relative;">
+                                <?php if (!empty($km['gambar']) && file_exists('uploads/kegiatan/' . $km['gambar'])) : ?>
+                                    <img src="<?= base_url('uploads/kegiatan/' . $km['gambar']) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                <?php else : ?>
+                                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #cbd5e1; flex-direction: column;">
+                                        <i class="fas fa-image fa-2x mb-1"></i>
+                                        <span style="font-size: 10px;">Foto tidak tersedia</span>
+                                    </div>
+                                <?php endif; ?>
+                                
+                                <span style="position: absolute; top: 8px; left: 8px; background:#10b981; color:white; padding:3px 10px; border-radius:8px; font-size:9px; font-weight:700; text-transform: uppercase;">
+                                    <?= $km['status'] ?>
+                                </span>
+                            </div>
+
+                            <div class="px-1">
+                                <h6 style="color:#064e3b; font-weight: 800; margin-bottom: 4px; font-size: 15px; line-height: 1.4;">
+                                    <?= $km['judul_kegiatan'] ?>
+                                </h6>
+                                
+                                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;">
+                                    <i class="far fa-calendar-alt me-1"></i> <?= date('d M Y', strtotime($km['updated_at'] ?? $km['tanggal'])) ?>
+                                </div>
+
+                                <div style="background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px solid #f1f5f9;">
+                                    <p style="margin-bottom: 5px; font-size: 12px; color: #1e293b; display: flex; align-items: start;">
+                                        <i class="fas fa-map-marker-alt" style="color:#ef4444; margin-right: 8px; margin-top: 3px;"></i> 
+                                        <span><?= $km['lokasi'] ?></span>
+                                    </p>
+                                    <p style="margin-bottom: 0; font-size: 14px; font-weight: 800; color:#10b981; display: flex; align-items: center;">
+                                        <i class="fas fa-wallet" style="margin-right: 8px; font-weight: 400;"></i> 
+                                        Rp <?= number_format((float)$km['anggaran'], 0, ',', '.') ?>
+                                    </p>
+                                </div>
+
+                                <div class="mt-3">
+                                    <a href="<?= base_url('home/detail/' . ($km['kegiatan_id'] ?? $km['id'])) ?>" class="btn btn-sm w-100" style="background: #10b981; color: #fff; font-size: 11px; font-weight: 700; border-radius: 10px; padding: 8px;">
+                                        LIHAT DETAIL <i class="fas fa-chevron-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+
+                <?php endif; ?>
+            <?php endforeach; ?>
+        <?php endif; ?>
+
+        // 6. Fix tampilan peta (invalidate size) setelah animasi AOS selesai
+        setTimeout(() => {
+            mapLanding.invalidateSize();
+        }, 600);
     });
 </script>
 </body>

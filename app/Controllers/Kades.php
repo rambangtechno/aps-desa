@@ -8,116 +8,106 @@ use App\Models\PersetujuanModel;
 class Kades extends BaseController
 {
     protected $kegiatanModel;
+    protected $db;
 
     public function __construct()
     {
         $this->kegiatanModel = new KegiatanModel();
+        $this->db = \Config\Database::connect(); // Inisialisasi database agar tidak error
 
-        // PROTEKSI: Hanya Kepala Desa yang boleh masuk ke Controller ini
+        // PROTEKSI: Hanya Kepala Desa yang boleh masuk
         if (session()->get('role') !== 'kepala_desa') {
-            // Gunakan redirect standar CI4
             header('Location: ' . base_url('admin'));
             exit();
         }
     }
 
     public function index()
-{
-    // Hitung Total Anggaran khusus untuk Dashboard Kades
-    $total_anggaran = $this->kegiatanModel->selectSum('anggaran')->get()->getRow()->anggaran ?? 0;
-
-    $data = [
-        'title'          => 'Dashboard Kepala Desa',
-        'total_kegiatan' => $this->kegiatanModel->countAllResults(),
-        'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAllResults(),
-        'total_anggaran' => $total_anggaran, // Data pengganti Verifikasi User
-        'kegiatan_map'   => $this->kegiatanModel->where('latitude !=', null)->findAll(),
-    ];
-
-    return view('kades/dashboard_v', $data);
-}
-    
-    // 2. Fungsi Proses Persetujuan (ACC atau Tolak)
-    // Di dalam class Kades
-   public function proses_persetujuan($id, $status)
     {
-        $persetujuanModel = new \App\Models\PersetujuanModel();
+        $total_anggaran = $this->kegiatanModel->selectSum('anggaran')->get()->getRow()->anggaran ?? 0;
+
+        $data = [
+            'title'          => 'Dashboard Kepala Desa',
+            'total_kegiatan' => $this->kegiatanModel->countAllResults(),
+            'total_pending'  => $this->kegiatanModel->where('status', 'Pending')->countAllResults(),
+            'total_anggaran' => $total_anggaran,
+            'kegiatan_map'   => $this->kegiatanModel->where('latitude !=', null)->findAll(),
+        ];
+
+        return view('kades/dashboard_v', $data);
+    }
+
+    public function persetujuan()
+    {
+        $data = [
+            'title'    => 'Daftar Persetujuan Kegiatan',
+            'kegiatan' => $this->kegiatanModel->where('status', 'Pending')->findAll(),
+        ];
+        return view('kades/persetujuan_v', $data);
+    }
+
+    public function proses_persetujuan($id, $status)
+    {
+        $persetujuanModel = new PersetujuanModel();
         $id_kades = session()->get('id'); 
 
-        // 1. Ambil data kegiatan asli
         $kegiatan = $this->kegiatanModel->find($id);
-
         if (!$kegiatan) {
             return redirect()->back()->with('error', 'Data tidak ditemukan.');
         }
 
-        // 2. Siapkan data untuk tabel 'persetujuan_kegiatan' (Arsip)
-        $dataArsip = [
+        $this->db->transStart();
+
+        // Simpan ke arsip
+        $persetujuanModel->insert([
             'kegiatan_id'         => $id,
             'kepala_desa_id'      => $id_kades,
-            'status'              => $status, // Isinya "Disetujui"
+            'status'              => $status,
             'lokasi'              => $kegiatan['lokasi'],
             'anggaran'            => $kegiatan['anggaran'],
-            'tanggal_persetujuan' => date('Y-m-d H:i:s') // Pastikan kolom ini ada di database
-        ];
-
-        // 3. Proses Update & Insert (Gunakan Transaksi agar Aman)
-        $db = \Config\Database::connect();
-        $db->transStart();
-
-        // Simpan ke tabel arsip
-        $persetujuanModel->insert($dataArsip);
+            'tanggal_persetujuan' => date('Y-m-d H:i:s')
+        ]);
         
-        // Update status di tabel kegiatan utama
+        // Update status utama
         $this->kegiatanModel->update($id, ['status' => $status]);
 
-        $db->transComplete();
+        $this->db->transComplete();
 
-        if ($db->transStatus() === FALSE) {
+        if ($this->db->transStatus() === FALSE) {
             return redirect()->back()->with('error', 'Gagal memproses data.');
         }
 
         return redirect()->to(base_url('kades/riwayat'))->with('success', 'Kegiatan Berhasil Disetujui!');
     }
 
-    public function laporan()
-        {
-            $data = [
-                'title'    => 'Persetujuan Laporan Kegiatan',
-                // Ambil kegiatan yang perlu di-ACC oleh Kades
-                'laporan'  => $this->kegiatanModel->orderBy('kegiatan_id', 'DESC')->findAll(),
-            ];
-            return view('kades/laporan_v', $data);
-        }
-  
-        public function riwayat()
+   public function riwayat()
 {
-    $db = \Config\Database::connect();
+    $db      = \Config\Database::connect();
+    $builder = $db->table('kegiatan');
     
-    // Ambil data dengan Join agar nama kegiatan muncul
-    $arsip = $db->table('persetujuan_kegiatan')
-                ->select('persetujuan_kegiatan.*, kegiatan.judul_kegiatan')
-                ->join('kegiatan', 'kegiatan.kegiatan_id = persetujuan_kegiatan.kegiatan_id')
-                ->where('persetujuan_kegiatan.status', 'Disetujui') // Filter status
-                ->get()
-                ->getResultArray();
+    $tgl_mulai   = $this->request->getGet('tgl_mulai');
+    $tgl_selesai = $this->request->getGet('tgl_selesai');
+
+    // Filter status (Pastikan tulisan 'Disetujui' sama dengan di database)
+    $builder->where('status', 'Disetujui');
+
+    // Cek apakah kolom updated_at ada, jika tidak pakai created_at atau kolom lain
+    $fields = $db->getFieldNames('kegiatan');
+    $kolom_tgl = in_array('updated_at', $fields) ? 'updated_at' : (in_array('tanggal', $fields) ? 'tanggal' : 'kegiatan_id');
+
+    if (!empty($tgl_mulai) && !empty($tgl_selesai)) {
+        $builder->where("$kolom_tgl >=", $tgl_mulai . ' 00:00:00');
+        $builder->where("$kolom_tgl <=", $tgl_selesai . ' 23:59:59');
+    }
 
     $data = [
-        'title' => 'Riwayat Persetujuan',
-        'arsip' => $arsip, // Variabel ini harus dipakai di foreach View
+        'title'       => 'Riwayat Persetujuan',
+        'arsip'       => $builder->orderBy($kolom_tgl, 'DESC')->get()->getResultArray(),
+        'tgl_mulai'   => $tgl_mulai,
+        'tgl_selesai' => $tgl_selesai,
+        'kolom_tgl'   => $kolom_tgl // Kita kirim nama kolomnya ke view
     ];
 
     return view('kades/riwayat_v', $data);
-}
-
-public function persetujuan()
-{
-    $data = [
-        'title'    => 'Daftar Persetujuan Kegiatan',
-        // Ambil hanya yang statusnya 'Pending' untuk di-ACC
-        'kegiatan' => $this->kegiatanModel->where('status', 'Pending')->findAll(),
-    ];
-
-    return view('kades/persetujuan_v', $data);
 }
 }

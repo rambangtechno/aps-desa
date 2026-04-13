@@ -8,7 +8,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <style>
         :root {
@@ -37,10 +41,12 @@
             border-right: 1px solid #e2e8f0;
             display: flex;
             flex-direction: column;
+            position: sticky;
+            top: 0;
         }
 
         .sidebar .brand-wrapper {
-            padding: 35px 25px;
+            padding: 30px 25px;
             border-bottom: 1px solid #f1f5f9;
         }
 
@@ -116,15 +122,15 @@
             flex: 1;
         }
 
-        /* Card Branding */
         .brand-text {
             color: var(--dark-green);
-            font-size: 1.1rem;
+            font-size: 1rem;
             letter-spacing: -0.5px;
+            line-height: 1.2;
         }
 
         .btn-logout {
-            color: #ef4444;
+            color: #ef4444 !important;
             background: #fef2f2;
             margin-top: auto;
             margin-bottom: 30px;
@@ -132,150 +138,201 @@
         
         .btn-logout:hover {
             background: #fee2e2;
-            color: #b91c1c;
+            color: #b91c1c !important;
         }
     </style>
 </head>
 <body>
 
+<?php 
+    // Memanggil data desa dari helper
+    $desa = get_profil_desa(); 
+?>
+
 <div class="d-flex">
     <div class="sidebar" id="sidebar">
-    <div class="brand-wrapper">
-        <div class="d-flex align-items-center">
-            <div class="bg-success rounded-3 p-2 me-3 shadow-sm" style="background: var(--primary-green) !important;">
-                <i class="fas fa-leaf text-white fa-lg"></i>
-            </div>
-            <div>
-                <h6 class="fw-bold mb-0 brand-text">Segarau Parit</h6>
-                <small class="text-muted fw-medium" style="font-size: 0.7rem;">DESA DIGITAL</small>
+        <div class="brand-wrapper">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <?php if (!empty($desa['logo']) && file_exists('uploads/profil/' . $desa['logo'])) : ?>
+                        <img src="<?= base_url('uploads/profil/' . $desa['logo']) ?>" alt="Logo" style="width: 45px; height: 45px; object-fit: contain; border-radius: 10px;">
+                    <?php else : ?>
+                        <div class="bg-success rounded-3 p-2 shadow-sm" style="background: var(--primary-green) !important; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-leaf text-white fa-lg"></i>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 brand-text"><?= $desa['nama_desa'] ?></h6>
+                    <small class="text-muted fw-medium" style="font-size: 0.65rem;">DESA DIGITAL</small>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div class="sidebar-menu flex-grow-1">
-        <ul class="nav flex-column mt-3">
-            
-            <?php if (session()->get('role') == 'admin') : ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('admin') || url_is('admin/index')) ? 'active' : '' ?>" href="<?= base_url('admin') ?>">
-                        <i class="fas fa-chart-line me-2"></i> Dashboard
-                    </a>
-                </li>
-                <div class="sidebar-label">Manajemen</div>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('admin/kegiatan*')) ? 'active' : '' ?>" href="<?= base_url('admin/kegiatan') ?>">
-                        <i class="fas fa-tasks me-2"></i> Data Kegiatan
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('admin/kelola_kades*')) ? 'active' : '' ?>" href="<?= base_url('admin/kelola_kades') ?>">
-                        <i class="fas fa-user-tie me-2"></i> Kelola Kepala Desa
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('admin/verifikasi_user*')) ? 'active' : '' ?>" href="<?= base_url('admin/verifikasi_user') ?>">
-                        <i class="fas fa-user-check me-2"></i> Verifikasi Akun
-                    </a>
-                </li>
-                <div class="sidebar-label">Laporan</div>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('admin/print_laporan*')) ? 'active' : '' ?>" href="<?= base_url('admin/print_laporan') ?>">
-                        <i class="fas fa-print me-2"></i> Cetak Laporan
-                    </a>
-                </li>
-            <?php endif; ?>
+        
+        <div class="sidebar-menu flex-grow-1 overflow-auto">
+            <ul class="nav flex-column mt-3">
+                
+                <?php if (session()->get('role') == 'admin') : ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin') || url_is('admin/index')) ? 'active' : '' ?>" href="<?= base_url('admin') ?>">
+                            <i class="fas fa-chart-line me-2"></i> Dashboard
+                        </a>
+                    </li>
+                    <div class="sidebar-label">Manajemen</div>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/kegiatan*')) ? 'active' : '' ?>" href="<?= base_url('admin/kegiatan') ?>">
+                            <i class="fas fa-tasks me-2"></i> Data Kegiatan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/penduduk*')) ? 'active' : '' ?>" href="<?= base_url('admin/penduduk') ?>">
+                            <i class="fas fa-users me-2"></i> Data Penduduk
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/blast*')) ? 'active' : '' ?>" href="<?= base_url('admin/blast') ?>">
+                            <i class="fab fa-whatsapp me-2"></i> WA Blast Kegiatan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/kelola_kades*')) ? 'active' : '' ?>" href="<?= base_url('admin/kelola_kades') ?>">
+                            <i class="fas fa-user-tie me-2"></i> Kelola Kepala Desa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/verifikasi_user*')) ? 'active' : '' ?>" href="<?= base_url('admin/verifikasi_user') ?>">
+                            <i class="fas fa-user-check me-2"></i> Verifikasi Akun
+                        </a>
+                    </li>
+                    <div class="sidebar-label">Laporan</div>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/print_laporan*')) ? 'active' : '' ?>" href="<?= base_url('admin/print_laporan') ?>">
+                            <i class="fas fa-print me-2"></i> Cetak Laporan
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/kelola_user*')) ? 'active' : '' ?>" href="<?= base_url('admin/kelola_user') ?>">
+                            <i class="fas fa-users-cog me-2"></i> Kelola User
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('admin/profil_desa*')) ? 'active' : '' ?>" href="<?= base_url('admin/profil_desa') ?>">
+                            <i class="fas fa-landmark me-2"></i> Profil Desa
+                        </a>
+                    </li>
+                <?php endif; ?>
 
-            <?php if (session()->get('role') == 'kepala_desa') : ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('kades') || url_is('kades/index')) ? 'active' : '' ?>" href="<?= base_url('kades') ?>">
-                        <i class="fas fa-chart-pie me-2"></i> Dashboard
-                    </a>
-                </li>
-                <div class="sidebar-label">Otoritas Kades</div>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('kades/persetujuan*')) ? 'active' : '' ?>" href="<?= base_url('kades/persetujuan') ?>">
-                        <i class="fas fa-file-signature me-2"></i> Persetujuan (ACC)
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link <?= (url_is('kades/riwayat*')) ? 'active' : '' ?>" href="<?= base_url('kades/riwayat') ?>">
-                        <i class="fas fa-history me-2"></i> Riwayat & Verifikasi
-                    </a>
-                </li>
-            <?php endif; ?>
+                <?php if (session()->get('role') == 'kepala_desa') : ?>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('kades') || url_is('kades/index')) ? 'active' : '' ?>" href="<?= base_url('kades') ?>">
+                            <i class="fas fa-chart-pie me-2"></i> Dashboard
+                        </a>
+                    </li>
+                    <div class="sidebar-label">Otoritas Kades</div>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('kades/persetujuan*')) ? 'active' : '' ?>" href="<?= base_url('kades/persetujuan') ?>">
+                            <i class="fas fa-file-signature me-2"></i> Persetujuan (ACC)
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?= (url_is('kades/riwayat*')) ? 'active' : '' ?>" href="<?= base_url('kades/riwayat') ?>">
+                            <i class="fas fa-history me-2"></i> Riwayat & Verifikasi
+                        </a>
+                    </li>
+                <?php endif; ?>
 
-            <li class="nav-item mt-auto">
-                <a class="nav-link btn-logout" href="javascript:void(0)" onclick="confirmLogout()">
-                    <i class="fas fa-power-off me-2"></i> Keluar
-                </a>
-            </li>
-        </ul>
+                <li class="nav-item mt-auto">
+                    <a class="nav-link btn-logout" href="javascript:void(0)" onclick="confirmLogout()">
+                        <i class="fas fa-power-off me-2"></i> Keluar
+                    </a>
+                </li>
+            </ul>
+        </div>
     </div>
-</div>
 
     <div class="content">
-        <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-            <div class="container-fluid p-0">
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-light border d-md-none me-3" id="mobile-toggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <h6 class="fw-bold mb-0 text-dark d-none d-sm-block">Overview Sistem</h6>
-                </div>
-                
-                <div class="d-flex align-items-center">
-                    <div class="text-end me-3 d-none d-md-block">
-                        <p class="mb-0 fw-bold small text-capitalize"><?= session()->get('nama') ?></p>
-                        <p class="mb-0 text-muted small" style="font-size: 10px; font-weight: 600;"><?= strtoupper(session()->get('role')) ?></p>
-                    </div>
-                    <div class="dropdown">
-                        <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="https://ui-avatars.com/api/?name=<?= session()->get('nama') ?>&background=10b981&color=fff&bold=true" class="user-profile-img shadow-sm">
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 animate slideIn">
-                            <li class="px-3 py-2 d-md-none border-bottom">
-                                <p class="mb-0 fw-bold small text-capitalize"><?= session()->get('nama') ?></p>
-                                <p class="mb-0 text-muted small" style="font-size: 10px;"><?= strtoupper(session()->get('role')) ?></p>
-                            </li>
-                            <li><a class="dropdown-item py-2" href="#"><i class="fas fa-user-circle me-2 text-muted"></i> Pengaturan Profil</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item py-2 text-danger fw-bold" href="javascript:void(0)" onclick="confirmLogout()"><i class="fas fa-power-off me-2"></i> Keluar Aplikasi</a></li>
-                        </ul>
-                    </div>
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+        <div class="container-fluid p-0">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-light border d-md-none me-3" id="mobile-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="d-none d-sm-block">
+                    <h6 class="fw-bold mb-0 text-dark">Aplikasi Pengelolaan Kegiatan Desa Segarau Parit</h6>
+                    <small class="text-muted" style="font-size: 11px;">Kec. Tebas, Kab. Sambas</small>
                 </div>
             </div>
-        </nav>
+            
+            <div class="d-flex align-items-center">
+                <div class="text-end me-4 d-none d-lg-block border-end pe-4">
+                    <h6 class="mb-0 fw-bold small text-dark" id="live-clock">00:00:00</h6>
+                    <p class="mb-0 text-muted small" style="font-size: 10px; font-weight: 600;"><?= date('l, d F Y') ?></p>
+                </div>
 
-        <div class="section-container">
-            <?= $this->renderSection('content') ?>
+                <div class="text-end me-3 d-none d-md-block">
+                    <p class="mb-0 fw-bold small text-capitalize"><?= session()->get('nama') ?></p>
+                    <p class="mb-0 text-muted small" style="font-size: 10px; font-weight: 600;"><?= strtoupper(session()->get('role')) ?></p>
+                </div>
+                <div class="dropdown">
+                    <a href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://ui-avatars.com/api/?name=<?= session()->get('nama') ?>&background=10b981&color=fff&bold=true" class="user-profile-img shadow-sm">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 animate slideIn">
+                        <li class="px-3 py-2 d-md-none border-bottom">
+                            <p class="mb-0 fw-bold small text-capitalize"><?= session()->get('nama') ?></p>
+                            <p class="mb-0 text-muted small" style="font-size: 10px;"><?= strtoupper(session()->get('role')) ?></p>
+                        </li>
+                        <li><a class="dropdown-item py-2" href="#"><i class="fas fa-user-circle me-2 text-muted"></i> Pengaturan Profil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2 text-danger fw-bold" href="javascript:void(0)" onclick="confirmLogout()"><i class="fas fa-power-off me-2"></i> Keluar Aplikasi</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
+    </nav>
+
+    <div class="section-container">
+        <?= $this->renderSection('content') ?>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // Toggle Sidebar Mobile
+
+    // Fungsi Jam Digital Real-time
+function updateClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    
+    const timeString = `${hours}:${minutes}:${seconds} WIB`;
+    const clockElement = document.getElementById('live-clock');
+    if (clockElement) {
+        clockElement.textContent = timeString;
+    }
+}
+
+// Jalankan setiap detik
+setInterval(updateClock, 1000);
+updateClock(); // Panggil langsung saat load
+
     document.getElementById('mobile-toggle')?.addEventListener('click', function() {
         document.getElementById('sidebar').classList.toggle('active');
     });
 
-    // Custom confirm Logout
     function confirmLogout() {
         Swal.fire({
             title: 'Akhiri Sesi?',
-            text: "Anda akan keluar dari sistem Desa Digital Segarau Parit.",
+            text: "Anda akan keluar dari sistem.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#10b981',
             cancelButtonColor: '#94a3b8',
             confirmButtonText: 'Ya, Keluar',
             cancelButtonText: 'Batal',
-            reverseButtons: true,
-            customClass: {
-                confirmButton: 'rounded-pill px-4',
-                cancelButton: 'rounded-pill px-4'
-            }
+            reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
                 window.location.href = "<?= base_url('auth/logout') ?>";
@@ -283,7 +340,6 @@
         });
     }
 
-    // Toast Flashdata
     document.addEventListener('DOMContentLoaded', function() {
         const Toast = Swal.mixin({
             toast: true,
@@ -294,10 +350,7 @@
         });
 
         <?php if (session()->getFlashdata('success')): ?>
-            Toast.fire({
-                icon: 'success',
-                title: '<?= session()->getFlashdata('success') ?>'
-            });
+            Toast.fire({ icon: 'success', title: '<?= session()->getFlashdata('success') ?>' });
         <?php endif; ?>
 
         <?php if (session()->getFlashdata('error')): ?>

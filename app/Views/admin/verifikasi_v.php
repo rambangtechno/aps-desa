@@ -70,8 +70,8 @@ function confirmVerifikasi(id, name) {
         reverseButtons: true
     }).then((result) => {
         if (result.isConfirmed) {
-            // Arahkan ke fungsi aktivasi di Controller Admin
-            window.location.href = "<?= base_url('admin/aktivasi_user') ?>/" + id;
+            // Kita tambahkan /1 di akhir agar sesuai dengan route (:num)/(:num)
+            window.location.href = "<?= base_url('admin/aktivasi_user') ?>/" + id + "/1";
         }
     });
 }

@@ -51,5 +51,20 @@ $routes->get('kades/riwayat', 'Kades::riwayat');
 $routes->get('kades/setujui/(:num)', 'Kades::setujui/$1'); // Untuk proses TTD/ACC
 
 $routes->get('kades/persetujuan', 'Kades::persetujuan');
+
+$routes->get('admin/kelola_user', 'Admin::kelola_user');
+$routes->get('admin/aktivasi_user/(:num)/(:num)', 'Admin::aktivasi_user/$1/$2');
+$routes->get('admin/profil_desa', 'Admin::profil_desa');
+$routes->post('admin/update_profil', 'Admin::update_profil');
+$routes->get('admin/profil_desa', 'Admin::profil_desa');
+$routes->post('admin/update_profil', 'Admin::update_profil');
+// Pastikan metodenya POST karena form edit mengirim data
+$routes->post('admin/update_user/(:num)', 'Admin::update_user/$1');
+$routes->get('admin/penduduk', 'Admin::penduduk');
+$routes->post('admin/penduduk_simpan', 'Admin::penduduk_simpan');
+$routes->get('admin/penduduk_hapus/(:num)', 'Admin::penduduk_hapus/$1');
+
+$routes->get('admin/blast', 'Admin::blast');
+$routes->post('admin/proses_blast', 'Admin::proses_blast');
 // Tambahkan ini di Routes.php
 $routes->get('auth/logout', 'Auth::logout');

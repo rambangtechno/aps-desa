@@ -139,17 +139,40 @@
                 var imgPath = fotoArray[0] ? '<?= base_url('uploads/kegiatan/') ?>' + '/' + fotoArray[0] : '';
 
                 marker.bindPopup(`
-                    <div style="min-width: 180px; font-family: sans-serif;">
-                        ${imgPath ? `<img src="${imgPath}" style="width:100%; height:100px; object-fit:cover; border-radius:8px; margin-bottom:8px;">` : ''}
-                        <h6 style="font-weight:bold; color:${status === 'Disetujui' ? '#10b981' : '#f6c23e'}; margin-bottom:4px;"><?= addslashes($k['judul_kegiatan']) ?></h6>
-                        <small style="color:#666;">Status: <b>${status}</b></small><br>
-                        <small style="color:#666;"><i class="fas fa-map-marker-alt"></i> <?= addslashes($k['lokasi']) ?></small>
-                        <hr style="margin:8px 0;">
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="btn btn-sm btn-success text-white w-100" style="border-radius:5px; font-size:11px;">
-                            <i class="fas fa-directions me-1"></i> Kunjungi Lokasi (Rute)
-                        </a>
-                    </div>
-                `);
+                        <div style="min-width: 200px; font-family: 'Plus Jakarta Sans', sans-serif;">
+                            ${imgPath ? `<img src="${imgPath}" style="width:100%; height:110px; object-fit:cover; border-radius:10px; margin-bottom:10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">` : ''}
+                            
+                            <h6 style="font-weight:800; color:${status === 'Disetujui' ? '#064e3b' : '#856404'}; margin-bottom:8px; font-size:14px; line-height:1.4;">
+                                <?= addslashes($k['judul_kegiatan']) ?>
+                            </h6>
+                            
+                            <div style="font-size:11px; color:#475569; line-height: 1.6;">
+                                <div class="mb-1">
+                                    <i class="fas fa-calendar-alt text-muted" style="width:18px;"></i> 
+                                    <span><?= date('d M Y', strtotime($k['updated_at'] ?? $k['tanggal'])) ?></span>
+                                </div>
+                                <div class="mb-1">
+                                    <i class="fas fa-wallet text-success" style="width:18px;"></i> 
+                                    <b style="color:#10b981;">Rp <?= number_format((float)$k['anggaran'], 0, ',', '.') ?></b>
+                                </div>
+                                <div class="mb-1">
+                                    <i class="fas fa-map-marker-alt text-danger" style="width:18px;"></i> 
+                                    <span><?= addslashes($k['lokasi']) ?></span>
+                                </div>
+                                <div class="mt-1">
+                                    <span style="background:${status === 'Disetujui' ? '#ecfdf5' : '#fffbeb'}; color:${status === 'Disetujui' ? '#10b981' : '#b45309'}; padding:2px 8px; border-radius:12px; font-weight:700; font-size:10px; border: 1px solid ${status === 'Disetujui' ? '#d1fae5' : '#fef3c7'}; text-transform:uppercase;">
+                                        ${status}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <hr style="margin:12px 0; border: 0; border-top: 1px solid #f1f5f9;">
+                            
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}" target="_blank" class="btn btn-sm btn-success text-white w-100" style="border-radius:8px; font-size:11px; font-weight:700; padding: 8px;">
+                                <i class="fas fa-directions me-1"></i> PENUNJUK ARAH
+                            </a>
+                        </div>
+                    `);
 
                 marker.addTo(map);
                 allMarkers.push(marker);

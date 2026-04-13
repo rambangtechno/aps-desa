@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Models\KegiatanModel;
 use App\Models\UserModel;
+use App\Models\PendudukModel;
+use App\Models\BlastModel;
 
 class Admin extends BaseController
 {
@@ -190,23 +192,16 @@ public function index()
 
         return view('admin/verifikasi_v', $data);
     }
+public function aktivasi_user($id, $status)
+{
+    // Misal nama kolomnya 'is_active' atau 'status'
+    // Sesuaikan dengan model user kamu
+    $this->userModel->update($id, [
+        'is_active' => $status 
+    ]);
 
-    // Tambahkan ini di dalam class Admin
-    public function aktivasi_user($id)
-    {
-        // Hanya admin yang bisa eksekusi ini
-        if (session()->get('role') !== 'admin') {
-            return redirect()->to('/admin')->with('error', 'Akses ditolak.');
-        }
-
-        // Update status is_active menjadi 1
-        if ($this->userModel->update($id, ['is_active' => 1])) {
-            return redirect()->to('/admin/verifikasi_user')->with('success', 'Akun berhasil diverifikasi! Sekarang user tersebut sudah bisa login.');
-        } else {
-            return redirect()->back()->with('error', 'Gagal memproses verifikasi.');
-        }
-    }
-
+    return redirect()->to(base_url('admin/verifikasi_user'))->with('success', 'Akun berhasil diverifikasi!');
+}
  public function form_cetak()
 {
     $db = \Config\Database::connect();
@@ -293,5 +288,251 @@ public function sebaran_kegiatan()
     
     $data['title'] = "Sebaran Lokasi Kegiatan";
     return view('admin/sebaran_v', $data);
+}
+
+public function profil_desa()
+{
+    $db = \Config\Database::connect();
+    $data = [
+        'title' => 'Profil Desa',
+        'desa'  => $db->table('profil_desa')->where('id', 1)->get()->getRowArray(),
+    ];
+    return view('admin/profil_desa_v', $data);
+}
+
+public function update_profil()
+{
+    $db = \Config\Database::connect();
+    $id = $this->request->getPost('id');
+    $fileLogo = $this->request->getFile('logo');
+    $logoLama = $this->request->getPost('logo_lama');
+
+    $data = [
+        'nama_desa' => $this->request->getPost('nama_desa'),
+        'alamat'    => $this->request->getPost('alamat'),
+        'telepon'   => $this->request->getPost('telepon'),
+        'email'     => $this->request->getPost('email'),
+        'latitude'  => $this->request->getPost('latitude'),
+        'longitude' => $this->request->getPost('longitude'),
+        'sejarah'   => $this->request->getPost('sejarah'),
+        'updated_at'=> date('Y-m-d H:i:s')
+    ];
+
+    // Cek jika ada file logo baru yang diupload
+    if ($fileLogo->isValid() && !$fileLogo->hasMoved()) {
+        $namaLogo = $fileLogo->getRandomName();
+        $fileLogo->move('uploads/profil/', $namaLogo);
+        
+        $data['logo'] = $namaLogo;
+
+        // Hapus logo lama jika ada (biar folder tidak penuh)
+        if ($logoLama && file_exists('uploads/profil/' . $logoLama)) {
+            unlink('uploads/profil/' . $logoLama);
+        }
+    }
+
+    $db->table('profil_desa')->where('id', $id)->update($data);
+    return redirect()->back()->with('success', 'Profil dan Logo Desa berhasil diperbarui!');
+}
+
+public function kelola_user()
+{
+    // Tangkap keyword pencarian
+    $keyword = $this->request->getVar('keyword');
+    
+    if ($keyword) {
+        $users = $this->userModel->like('nama_lengkap', $keyword)
+                                 ->orLike('username', $keyword)
+                                 ->findAll();
+    } else {
+        $users = $this->userModel->findAll();
+    }
+
+    $data = [
+        'title'   => 'Manajemen Pengguna',
+        'users'   => $users,
+        'keyword' => $keyword
+    ];
+    return view('admin/kelola_user_v', $data);
+}
+
+public function hapus_user($id)
+{
+    // Proteksi agar admin tidak menghapus akunnya sendiri yang sedang login
+    if ($id == session()->get('id')) {
+        return redirect()->back()->with('error', 'Anda tidak bisa menghapus akun sendiri!');
+    }
+
+    $this->userModel->delete($id);
+    return redirect()->to('/admin/kelola_user')->with('success', 'User berhasil dihapus.');
+}
+
+public function update_user($id)
+{
+    $data = [
+        'nama_lengkap' => $this->request->getVar('nama_lengkap'),
+        'username'     => $this->request->getVar('username'),
+        'role'         => $this->request->getVar('role'),
+    ];
+
+    // Jika password diisi, maka update passwordnya
+    $password = $this->request->getVar('password');
+    if (!empty($password)) {
+        $data['password'] = password_hash($password, PASSWORD_DEFAULT);
+    }
+
+    $this->userModel->update($id, $data);
+    return redirect()->to('/admin/kelola_user')->with('success', 'Data user berhasil diperbarui.');
+}
+
+// Di dalam class Admin:
+public function penduduk()
+{
+    $model = new PendudukModel();
+    $data = [
+        'title'    => 'Data Penduduk',
+        'penduduk' => $model->findAll()
+    ];
+    return view('admin/penduduk_v', $data);
+}
+
+public function penduduk_simpan()
+{
+    $model = new PendudukModel();
+    $model->save([
+        'nik'           => $this->request->getPost('nik'),
+        'nama_penduduk' => $this->request->getPost('nama_penduduk'),
+        'jenis_kelamin' => $this->request->getPost('jenis_kelamin'),
+        'no_wa'         => $this->request->getPost('no_wa'),
+        'dusun'         => $this->request->getPost('dusun'),
+        'status_aktif'  => 'Ya'
+    ]);
+
+    return redirect()->to(base_url('admin/penduduk'))->with('success', 'Data warga berhasil ditambahkan!');
+}
+
+public function penduduk_hapus($id)
+{
+    $model = new PendudukModel();
+    $model->delete($id);
+    return redirect()->to(base_url('admin/penduduk'))->with('success', 'Data warga telah dihapus!');
+}
+public function blast()
+{
+    $db = \Config\Database::connect();
+    
+    $data = [
+        'title'          => 'WA Blast Notifikasi',
+        'kegiatan'       => $db->table('kegiatan')->where('status', 'Disetujui')->get()->getResultArray(),
+        'total_penerima' => $db->table('penduduk')->where('status_aktif', 'Ya')->countAllResults(),
+        // Kirim data riwayat dari sini
+        'riwayat'        => $db->table('riwayat_blast')->orderBy('id_blast', 'DESC')->limit(5)->get()->getResultArray()
+    ];
+
+    return view('admin/blast_v', $data);
+}
+public function proses_blast()
+{
+    $db = \Config\Database::connect();
+    $pesan = $this->request->getPost('pesan');
+    $judul = $this->request->getPost('judul');
+
+    // 1. Ambil data nomor WA warga yang aktif
+    $warga = $db->table('penduduk')->where('status_aktif', 'Ya')->get()->getResultArray();
+    
+    if (empty($warga)) {
+        return $this->response->setJSON(['status' => 'error', 'msg' => 'Tidak ada nomor penduduk aktif di database.']);
+    }
+
+    // 2. Bersihkan nomor (Pastikan hanya angka)
+    $nomor_list = [];
+    foreach ($warga as $w) {
+        // Hapus karakter non-angka agar Fonnte tidak bingung
+        $clean_number = preg_replace('/[^0-9]/', '', $w['no_wa']);
+        if (!empty($clean_number)) {
+            $nomor_list[] = $clean_number;
+        }
+    }
+    $target = implode(',', $nomor_list);
+
+    // 3. Setting API Fonnte
+    $token = "ApiJLBggZ7zuQMTokTds"; 
+    
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+      CURLOPT_URL => 'https://api.fonnte.com/send',
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => "",
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_TIMEOUT => 0,
+      CURLOPT_FOLLOWLOCATION => true,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => 'POST',
+      // Gunakan http_build_query agar pengiriman data lebih stabil di beberapa server
+      CURLOPT_POSTFIELDS => http_build_query(array(
+        'target'      => $target,
+        'message'     => $pesan, 
+        'delay'       => '2', 
+        'countryCode' => '62', 
+      )),
+      CURLOPT_HTTPHEADER => array(
+        "Authorization: $token",
+        "Content-Type: application/x-www-form-urlencoded"
+      ),
+    ));
+
+    $response = curl_exec($curl);
+    $err = curl_error($curl);
+    curl_close($curl);
+    
+    // 4. Analisis Hasil Response
+    if ($err) {
+        return $this->response->setJSON(['status' => 'error', 'msg' => 'Masalah Koneksi Server (cURL): ' . $err]);
+    }
+
+    $result = json_decode($response, true);
+
+    // 5. Cek Status Respon Fonnte
+    if (isset($result['status']) && $result['status'] == true) {
+        // BERHASIL: Simpan ke RIWAYAT_BLAST
+        $db->table('riwayat_blast')->insert([
+            'judul_kegiatan'    => $judul,
+            'isi_pesan'         => $pesan,
+            'total_penerima'    => count($nomor_list),
+            'dikirim_oleh'      => session()->get('nama_lengkap') ?? 'Admin',
+            'status_pengiriman' => 'Selesai',
+            'created_at'        => date('Y-m-d H:i:s')
+        ]);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'total'  => count($nomor_list)
+        ]);
+    } else {
+        // GAGAL: Tangkap pesan error spesifik dari Fonnte
+        // Jika token salah, akan muncul "invalid token". Jika WA mati, muncul "device disconnected".
+        $pesan_error = $result['reason'] ?? ($result['detail'] ?? 'API Fonnte menolak permintaan.');
+        
+        return $this->response->setJSON([
+            'status' => 'error',
+            'msg'    => 'Fonnte Error: ' . $pesan_error
+        ]);
+    }
+}
+public function simpan_riwayat_blast()
+{
+    $blastModel = new \App\Models\BlastModel();
+
+    $data = [
+        'judul_kegiatan'    => $this->request->getPost('judul'),
+        'isi_pesan'         => $this->request->getPost('pesan'),
+        'total_penerima'    => $this->request->getPost('total'),
+        'status_pengiriman' => 'Selesai',
+        'dikirim_oleh'      => session()->get('nama') // Nama admin yang login
+    ];
+
+    $blastModel->save($data);
+    
+    return $this->response->setJSON(['status' => 'success']);
 }
 }
