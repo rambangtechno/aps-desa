@@ -7,22 +7,26 @@ use App\Models\KegiatanModel;
 
 class Home extends BaseController
 {
-    public function index(): string
-    {
-        $kegiatanModel = new \App\Models\KegiatanModel();
+  public function index(): string
+{
+    $kegiatanModel = new \App\Models\KegiatanModel();
+    $db = \Config\Database::connect();
 
-        $data = [
-            'title'        => 'Beranda',
-            // Tambahkan filter status Disetujui
-            'kegiatan_map' => $kegiatanModel->where('status', 'Disetujui')
-                                            ->where('latitude !=', null)
-                                            ->where('longitude !=', null)
-                                            ->findAll(),
-        ];
+    // Mengambil data dari tabel master_kades yang aktif
+    // Ini memastikan data yang muncul sinkron dengan fitur 'Input Kepala Desa'
+    $kades = $db->table('master_kades')->where('is_active', 1)->get()->getRowArray();
 
-        return view('index_v', $data);
-    }
+    $data = [
+        'title'        => 'Beranda',
+        'kades'        => $kades, 
+        'kegiatan_map' => $kegiatanModel->where('status', 'Disetujui')
+                                        ->where('latitude !=', null)
+                                        ->where('longitude !=', null)
+                                        ->findAll(),
+    ];
 
+    return view('index_v', $data);
+}
     public function profil()
     {
         // Data Kades tetap seperti yang kamu buat

@@ -6,6 +6,10 @@ use App\Models\KegiatanModel;
 use App\Models\UserModel;
 use App\Models\PendudukModel;
 use App\Models\BlastModel;
+// Tambahkan ini di bagian paling atas file (setelah namespace)
+use App\Models\KadesModel;
+
+
 
 class Admin extends BaseController
 {
@@ -230,7 +234,11 @@ public function proses_cetak()
     ];
     return view('admin/cetak_laporan_resmi', $data);
 }
-
+public function kades()
+{
+    // Mengarahkan ke fungsi kelola_kades yang sudah ada
+    return $this->kelola_kades();
+}
 public function kelola_kades()
 {
     $db = \Config\Database::connect();
@@ -241,22 +249,54 @@ public function kelola_kades()
     return view('admin/kelola_kades_v', $data);
 }
 
+// public function simpan_kades()
+// {
+//     $db = \Config\Database::connect();
+//     $data = [
+//         'nama_kades' => $this->request->getPost('nama_kades'),
+//         'nip'        => $this->request->getPost('nip'),
+//         'jabatan'    => $this->request->getPost('jabatan'),
+//         'is_active'  => 1
+//     ];
+    
+//     // Nonaktifkan kades lainnya dulu agar hanya 1 yang aktif
+//     $db->table('master_kades')->update(['is_active' => 0]);
+    
+//     // Simpan kades baru
+//     $db->table('master_kades')->insert($data);
+//     return redirect()->back()->with('success', 'Data Kepala Desa berhasil diperbarui.');
+// }
 public function simpan_kades()
 {
+    // 1. Ambil file foto
+    $foto = $this->request->getFile('foto');
+    
+    // 2. Validasi dan pindahkan foto
+    if ($foto && $foto->isValid() && !$foto->hasMoved()) {
+        $namaFoto = $foto->getRandomName();
+        $foto->move('uploads/kades', $namaFoto);
+    } else {
+        return redirect()->back()->with('error', 'Gagal mengunggah foto.');
+    }
+
+    // 3. Gunakan Query Builder agar konsisten dengan tabel 'master_kades'
+    // yang sudah Anda gunakan di fungsi kelola_kades()
     $db = \Config\Database::connect();
+    
     $data = [
         'nama_kades' => $this->request->getPost('nama_kades'),
         'nip'        => $this->request->getPost('nip'),
         'jabatan'    => $this->request->getPost('jabatan'),
-        'is_active'  => 1
+        'foto'       => $namaFoto,
+        'is_active'  => 0 // Default non-aktif
     ];
-    
-    // Nonaktifkan kades lainnya dulu agar hanya 1 yang aktif
-    $db->table('master_kades')->update(['is_active' => 0]);
-    
-    // Simpan kades baru
-    $db->table('master_kades')->insert($data);
-    return redirect()->back()->with('success', 'Data Kepala Desa berhasil diperbarui.');
+
+    if ($db->table('master_kades')->insert($data)) {
+        // Redirect ke halaman kelola_kades (sesuaikan dengan rute Anda)
+        return redirect()->to(base_url('admin/kelola_kades'))->with('success', 'Data Berhasil Disimpan!');
+    } else {
+        return redirect()->back()->with('error', 'Gagal menyimpan ke database.');
+    }
 }
 
 public function print_laporan()

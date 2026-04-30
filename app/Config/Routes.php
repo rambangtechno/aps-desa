@@ -68,5 +68,11 @@ $routes->post('admin/hitung_target_dusun', 'Admin::hitung_target_dusun');
 
 $routes->get('admin/blast', 'Admin::blast');
 $routes->post('admin/proses_blast', 'Admin::proses_blast');
+
+// Rute untuk menampilkan halaman daftar dan form input kades
+$routes->get('admin/kades', 'Admin::kades'); 
+
+// Rute untuk memproses penyimpanan data (POST)
+$routes->post('admin/simpan_kades', 'Admin::simpan_kades');
 // Tambahkan ini di Routes.php
 $routes->get('auth/logout', 'Auth::logout');

@@ -13,7 +13,75 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    /* Tambahan Style Modern untuk Visi Misi */
+    .vimi-container {
+        position: relative;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        background: linear-gradient(135deg, #064e3b 0%, #022c22 100%) !important;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
 
+    /* Dekorasi Lingkaran Cahaya di Belakang */
+    .vimi-container::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: var(--digi-green);
+        filter: blur(100px);
+        opacity: 0.2;
+        z-index: 0;
+    }
+
+    .kades-name-wrapper {
+        position: relative;
+        display: inline-block;
+        padding-bottom: 15px;
+    }
+
+    .kades-name-wrapper::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: var(--digi-green);
+        border-radius: 10px;
+    }
+
+    .vision-card-modern {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 30px;
+        transition: all 0.3s ease;
+    }
+
+    .vision-card-modern:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-5px);
+        border-color: var(--digi-green);
+    }
+
+    .misi-list-item {
+        background: rgba(16, 185, 129, 0.05);
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 12px;
+        border: 1px solid transparent;
+        transition: 0.3s;
+    }
+
+    .misi-list-item:hover {
+        border-color: rgba(16, 185, 129, 0.3);
+        padding-left: 20px;
+    }
+</style>
     <style>
         :root {
             --digi-green: #10b981; /* Emerald Green */
@@ -429,50 +497,91 @@
     </div>
 </section>
 
-<section id="profil-kades" class="kades-section">
-    <div class="container" data-aos="fade-up">
-        <div class="text-center mb-5 pb-3">
-            <h2 class="fw-bold display-6" style="color: var(--digi-dark); letter-spacing: -2px;">Profil Pemimpin Desa</h2>
-            <p class="text-muted">Visi dan Misi Kepala Desa Segarau Parit dalam membangun desa digital.</p>
-        </div>
-
-        <div class="swiper swiper-kades">
-            <div class="swiper-wrapper">
-                <div class="swiper-slide">
-                    <div class="kades-card-modern">
-                        <div class="kades-content-wrapper">
-                            <div class="kades-img-side">
-                                <span class="badge badge-status">AKTIF MENJABAT</span>
-                                <img src="https://cdn.digitaldesa.com/statics/landing/homepage/media/testimoni/kades-tompo.webp" alt="Kades">
+<section id="profil-kades" class="py-5">
+    <div class="container py-4">
+        <div class="vimi-container shadow-lg" data-aos="zoom-in" style="border-radius: 50px; padding: 70px 40px; overflow: hidden; background: linear-gradient(135deg, #064e3b 0%, #022c22 100%) !important;">
+            
+            <!-- Profil Pemimpin dengan Foto -->
+            <div class="row justify-content-center align-items-center mb-5">
+                <div class="col-lg-10">
+                    <div class="row align-items-center text-center text-lg-start">
+                        <!-- Foto Kepala Desa -->
+                        <div class="col-lg-4 mb-4 mb-lg-0 d-flex justify-content-center">
+                            <div class="photo-wrapper p-2" style="background: rgba(255,255,255,0.1); border-radius: 30px; border: 1px solid rgba(255,255,255,0.2);">
+                                <img src="<?= base_url('uploads/kades/' . ($kades['foto'] ?? 'default.jpg')) ?>" 
+                                     alt="Foto Kepala Desa" 
+                                     style="width: 240px; height: 300px; object-fit: cover; border-radius: 22px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
                             </div>
-                            <div class="kades-info-side">
-                                <span class="periode">Masa Jabatan: 2022 - 2028</span>
-                                <h3 class="fw-bold mb-1" style="color: var(--digi-dark); font-size: 32px;">H. Ahmad Syukri</h3>
-                                <p class="text-muted small mb-4 fw-bold">KEPALA DESA SEGARAU PARIT</p>
-                                
-                                <div class="vimi-box p-4">
-                                    <span class="vimi-title mb-2 d-block"><i class="fas fa-quote-left me-2"></i> VISI PEMBANGUNAN</span>
-                                    <p class="mb-3 italic lh-lg">"Mewujudkan desa digital yang mandiri, transparan, dan unggul dalam pelayanan publik melalui inovasi teknologi informasi demi kesejahteraan masyarakat Segarau Parit."</p>
-                                    
-                                    <span class="vimi-title mb-2 d-block"><i class="fas fa-bullseye me-2"></i> MISI UTAMA</span>
-                                    <ul class="mb-0 ps-3 small text-muted lh-lg">
-                                        <li>Digitalisasi tata kelola administrasi pemerintahan desa.</li>
-                                        <li>Mendorong transparansi anggaran dan kegiatan pembangunan.</li>
-                                        <li>Meningkatkan kualitas SDM perangkat desa yang melek teknologi.</li>
-                                    </ul>
-                                </div>
+                        </div>
+                        
+                        <!-- Nama dan Detail -->
+                        <div class="col-lg-8" style="position: relative; z-index: 1;">
+                            <span class="badge mb-3 px-4 py-2 rounded-pill" style="background: rgba(16, 185, 129, 0.2); color: #10b981; letter-spacing: 2px; font-weight: 700; font-size: 0.75rem;">PROFIL PEMIMPIN</span>
+                            
+                            <div class="kades-name-wrapper mb-3">
+                                <h2 class="fw-800 display-4 text-white m-0">
+                                    <?= esc($kades['nama_lengkap'] ?? 'Nama Kepala Desa') ?>
+                                </h2>
+                            </div>
+                            
+                            <p class="text-success fw-bold text-uppercase mb-1" style="letter-spacing: 4px; font-size: 0.85rem;">Kepala Desa Segarau Parit</p>
+                            <p class="text-white-50 mb-0">Masa Bakti: 2022 — 2028</p>
+                            <?php if(!empty($kades['nip'])): ?>
+                                <p class="text-white-50 small">NIP. <?= esc($kades['nip']) ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bagian Visi & Misi -->
+            <div class="row g-4" style="position: relative; z-index: 1;">
+                <!-- Visi Card -->
+                <div class="col-lg-5">
+                    <div class="vision-card-modern p-5 h-100" style="background: rgba(255,255,255,0.05); border-radius: 30px; border: 1px solid rgba(255,255,255,0.1);">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="icon-circle me-3" style="width: 50px; height: 50px; background: #10b981; color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <h4 class="text-white fw-800 m-0">Visi</h4>
+                        </div>
+                        <p class="lead text-white-50 lh-lg" style="font-style: italic; font-size: 1.15rem;">
+                            "Mewujudkan desa digital yang mandiri, transparan, dan unggul dalam pelayanan publik melalui inovasi teknologi informasi demi kesejahteraan masyarakat Segarau Parit."
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Misi Card -->
+                <div class="col-lg-7">
+                    <div class="p-2">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="icon-circle me-3" style="width: 50px; height: 50px; background: #10b981; color: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                            <h4 class="text-white fw-800 m-0">Misi Utama</h4>
+                        </div>
+                        
+                        <div class="misi-list">
+                            <div class="misi-list-item d-flex align-items-center mb-3 p-3" style="background: rgba(16, 185, 129, 0.05); border-radius: 15px;">
+                                <i class="fas fa-check-double text-success me-3"></i>
+                                <span class="text-white-50">Digitalisasi tata kelola administrasi pemerintahan desa secara terpadu.</span>
+                            </div>
+                            <div class="misi-list-item d-flex align-items-center mb-3 p-3" style="background: rgba(16, 185, 129, 0.05); border-radius: 15px;">
+                                <i class="fas fa-check-double text-success me-3"></i>
+                                <span class="text-white-50">Mendorong transparansi anggaran dan realisasi pembangunan kepada publik.</span>
+                            </div>
+                            <div class="misi-list-item d-flex align-items-center mb-3 p-3" style="background: rgba(16, 185, 129, 0.05); border-radius: 15px;">
+                                <i class="fas fa-check-double text-success me-3"></i>
+                                <span class="text-white-50">Meningkatkan kualitas SDM perangkat desa yang adaptif terhadap teknologi.</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="swiper-button-next custom-swiper-nav"></div>
-            <div class="swiper-button-prev custom-swiper-nav"></div>
-            <div class="swiper-pagination mt-5"></div>
+
         </div>
     </div>
 </section>
-
 <footer>
     <div class="container">
         <div class="row gy-4 text-center text-md-start">
