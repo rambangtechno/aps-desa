@@ -27,6 +27,7 @@ $routes->get('admin/verifikasi_user', 'Admin::verifikasi_user');
 $routes->get('admin/verifikasi_user', 'Admin::verifikasi_user');
 $routes->get('admin/aktivasi_user/(:num)', 'Admin::aktivasi_user/$1');
 $routes->post('admin/update_kegiatan/(:num)', 'Admin::update_kegiatan/$1');
+
 $routes->get('admin/hapus_kegiatan/(:num)', 'Admin::hapus_kegiatan/$1');
 
 // Routes khusus Kepala Desa
@@ -63,7 +64,8 @@ $routes->post('admin/update_user/(:num)', 'Admin::update_user/$1');
 $routes->get('admin/penduduk', 'Admin::penduduk');
 $routes->post('admin/penduduk_simpan', 'Admin::penduduk_simpan');
 $routes->get('admin/penduduk_hapus/(:num)', 'Admin::penduduk_hapus/$1');
-
+$routes->post('admin/penduduk_update/(:num)', 'Admin::penduduk_update/$1');
+$routes->post('Admin/penduduk_update/(:num)', 'Admin::penduduk_update/$1');
 $routes->post('admin/hitung_target_dusun', 'Admin::hitung_target_dusun');
 
 $routes->get('admin/blast', 'Admin::blast');
@@ -76,3 +78,5 @@ $routes->get('admin/kades', 'Admin::kades');
 $routes->post('admin/simpan_kades', 'Admin::simpan_kades');
 // Tambahkan ini di Routes.php
 $routes->get('auth/logout', 'Auth::logout');
+// Daftarkan route untuk halaman detail kegiatan
+$routes->get('home/detail/(:num)', 'Home::detail/$1');

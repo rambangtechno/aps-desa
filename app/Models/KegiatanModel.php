@@ -21,10 +21,11 @@ class KegiatanModel extends Model
     // Field yang boleh diisi (WAJIB didaftarkan agar bisa simpan data)
     protected $allowedFields    = [
         'judul_kegiatan', 
+        'kategori', 
         'deskripsi', 
         'tanggal', 
         'lokasi', 
-        'latitude',  // <--- PASTIKAN INI ADA
+        'latitude',  
         'longitude',
         'anggaran', 
         'status', 

@@ -2,6 +2,53 @@
 <?= $this->extend('layout/main') ?>
 
 <?= $this->section('content') ?>
+
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 15px;">
+    <div class="card-body p-3">
+        <div class="row g-2">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Cari Kegiatan</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                    <input type="text" id="searchJudul" class="form-control bg-light border-start-0" placeholder="Ketik judul kegiatan...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Kategori</label>
+                <select id="filterKategori" class="form-select form-select-sm bg-light">
+                    <option value="">Semua Kategori</option>
+                    <option value="Rutin">Rutin</option>
+                    <option value="Tahunan">Tahunan</option>
+                    <option value="Mingguan">Mingguan</option>
+                    <option value="Harian">Harian</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Status</label>
+                <select id="filterStatus" class="form-select form-select-sm bg-light">
+                    <option value="">Semua Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Disetujui">Disetujui</option>
+                    <option value="Ditolak">Ditolak</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Dari Tanggal</label>
+                <input type="date" id="filterTglMulai" class="form-control form-select-sm bg-light">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted">Sampai Tanggal</label>
+                <input type="date" id="filterTglSelesai" class="form-control form-select-sm bg-light">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" id="btnResetFilter" class="btn btn-outline-danger btn-sm w-100 rounded" title="Reset Filter">
+                    <i class="fas fa-undo"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card border-0 shadow-sm" style="border-radius: 15px;">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0">Daftar Kegiatan Desa</h5>
@@ -11,7 +58,7 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0" id="tabelKegiatan">
                 <thead class="bg-light">
                     <tr>
                         <th class="px-4">Kegiatan</th>
@@ -24,7 +71,11 @@
                 <tbody>
                     <?php if (!empty($kegiatan)) : ?>
                         <?php foreach ($kegiatan as $k) : ?>
-                        <tr>
+                        <tr class="baris-kegiatan" 
+                            data-judul="<?= strtolower(htmlspecialchars($k['judul_kegiatan'])) ?>"
+                            data-kategori="<?= $k['kategori'] ?? 'Rutin' ?>"
+                            data-status="<?= $k['status'] ?>"
+                            data-tanggal="<?= $k['tanggal'] ?? '' ?>">
                             <td class="px-4">
                                 <div class="d-flex align-items-center">
                                     <?php 
@@ -40,17 +91,20 @@
                                     <?php endif; ?>
                                     <div>
                                         <span class="fw-bold d-block"><?= $k['judul_kegiatan'] ?></span>
-                                        <small class="text-muted"><?= substr($k['deskripsi'], 0, 30) ?>...</small>
+                                        <span class="badge bg-secondary-subtle text-secondary mb-1" style="font-size: 10px; font-weight: 600; text-transform: uppercase;">
+                                            <i class="fas fa-tag me-1" style="font-size: 9px;"></i><?= $k['kategori'] ?? 'Rutin' ?>
+                                        </span>
+                                        <small class="text-muted d-block"><?= substr($k['deskripsi'], 0, 30) ?>...</small>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <small class="d-block"><i class="fas fa-calendar me-1"></i> <?= $k['tanggal'] ?></small>
+                                <small class="d-block text-muted"><i class="fas fa-calendar me-1"></i> <span class="txt-tanggal"><?= $k['tanggal'] ?? '-' ?></span></small>
                                 <small class="d-block text-primary"><i class="fas fa-map-marker-alt me-1"></i> <?= $k['lokasi'] ?></small>
                             </td>
                             <td><span class="badge bg-light text-dark">Rp <?= number_format((float)$k['anggaran'], 0, ',', '.') ?></span></td>
                             <td>
-                                <span class="badge <?= ($k['status'] == 'Pending') ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success' ?>" style="padding: 5px 10px;">
+                                <span class="badge <?= ($k['status'] == 'Pending') ? 'bg-warning-subtle text-warning' : (($k['status'] == 'Disetujui') ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger') ?>" style="padding: 5px 10px;">
                                     <?= $k['status'] ?>
                                 </span>
                             </td>
@@ -59,6 +113,7 @@
                                     <button class="btn btn-info btn-sm text-white rounded-circle shadow-sm me-1" 
                                         onclick="previewLengkap(
                                             '<?= htmlspecialchars($k['judul_kegiatan'], ENT_QUOTES) ?>', 
+                                            '<?= htmlspecialchars($k['kategori'] ?? 'Rutin', ENT_QUOTES) ?>', 
                                             '<?= htmlspecialchars(str_replace(["\r", "\n"], " ", $k['deskripsi']), ENT_QUOTES) ?>', 
                                             '<?= htmlspecialchars($k['foto'], ENT_QUOTES) ?>', 
                                             '<?= $k['tanggal'] ?>', 
@@ -93,6 +148,16 @@
                                         <div class="mb-3">
                                             <label class="form-label small fw-bold">Judul Kegiatan</label>
                                             <input type="text" name="judul_kegiatan" class="form-control" value="<?= $k['judul_kegiatan'] ?>" required>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label small fw-bold">Kategori Kegiatan</label>
+                                            <select name="kategori" class="form-select" required>
+                                                <option value="Rutin" <?= (isset($k['kategori']) && $k['kategori'] == 'Rutin') ? 'selected' : '' ?>>Rutin</option>
+                                                <option value="Tahunan" <?= (isset($k['kategori']) && $k['kategori'] == 'Tahunan') ? 'selected' : '' ?>>Tahunan</option>
+                                                <option value="Mingguan" <?= (isset($k['kategori']) && $k['kategori'] == 'Mingguan') ? 'selected' : '' ?>>Mingguan</option>
+                                                <option value="Harian" <?= (isset($k['kategori']) && $k['kategori'] == 'Harian') ? 'selected' : '' ?>>Harian</option>
+                                            </select>
                                         </div>
                                         
                                         <div class="row">
@@ -146,10 +211,13 @@
                     </div>
                         <?php endforeach; ?>
                     <?php else : ?>
-                        <tr>
+                        <tr id="noDataRow">
                             <td colspan="5" class="text-center py-5 text-muted">Belum ada data kegiatan.</td>
                         </tr>
                     <?php endif; ?>
+                    <tr id="filterKosongRow" style="display: none;">
+                        <td colspan="5" class="text-center py-5 text-muted">Data kegiatan tidak ditemukan berdasarkan filter pilihan.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -170,6 +238,18 @@
                         <label class="form-label small fw-bold">Judul Kegiatan</label>
                         <input type="text" name="judul_kegiatan" class="form-control" required>
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Kategori Kegiatan</label>
+                        <select name="kategori" class="form-select" required>
+                            <option value="" disabled selected>-- Pilih Kategori --</option>
+                            <option value="Rutin">Rutin</option>
+                            <option value="Tahunan">Tahunan</option>
+                            <option value="Mingguan">Mingguan</option>
+                            <option value="Harian">Harian</option>
+                        </select>
+                    </div>
+
                     <div class="row">
                         <div class="col-12 mb-3">
                             <label class="form-label small fw-bold text-success">Pilih Titik Lokasi (Klik pada Peta)</label>
@@ -204,8 +284,87 @@
         </div>
     </div>
 </div>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchJudul     = document.getElementById("searchJudul");
+    const filterKategori  = document.getElementById("filterKategori");
+    const filterStatus    = document.getElementById("filterStatus");
+    const filterTglMulai  = document.getElementById("filterTglMulai");
+    const filterTglSelesai = document.getElementById("filterTglSelesai");
+    const btnResetFilter  = document.getElementById("btnResetFilter");
+    const barisKegiatan   = document.querySelectorAll(".baris-kegiatan");
+    const filterKosongRow = document.getElementById("filterKosongRow");
+
+    function jalankanFilter() {
+        const keyword   = searchJudul.value.toLowerCase().trim();
+        const kategori  = filterKategori.value;
+        const status    = filterStatus.value;
+        const tglMulai  = filterTglMulai.value ? new Date(filterTglMulai.value) : null;
+        const tglSelesai = filterTglSelesai.value ? new Date(filterTglSelesai.value) : null;
+
+        let dataDitemukan = 0;
+
+        barisKegiatan.forEach(tr => {
+            const dataJudul    = tr.getAttribute("data-judul");
+            const dataKategori = tr.getAttribute("data-kategori");
+            const dataStatus   = tr.getAttribute("data-status");
+            const rawTanggal   = tr.getAttribute("data-tanggal");
+            const dataTanggal  = rawTanggal ? new Date(rawTanggal) : null;
+
+            // Logika Evaluasi Filter
+            const cocokKeyword  = !keyword || dataJudul.includes(keyword);
+            const cocokKategori = !kategori || dataKategori === kategori;
+            const cocokStatus   = !status || dataStatus === status;
+            
+            let cocokRentangWaktu = true;
+            if (dataTanggal) {
+                if (tglMulai && dataTanggal < tglMulai) cocokRentangWaktu = false;
+                if (tglSelesai && dataTanggal > tglSelesai) cocokRentangWaktu = false;
+            } else if (tglMulai || tglSelesai) {
+                // Jika user memfilter waktu tapi kegiatan tidak punya tanggal
+                cocokRentangWaktu = false;
+            }
+
+            // Aksi Sembunyikan / Tampilkan Baris
+            if (cocokKeyword && cocokKategori && cocokStatus && cocokRentangWaktu) {
+                tr.style.display = "";
+                dataDitemukan++;
+            } else {
+                tr.style.display = "none";
+            }
+        });
+
+        // Menampilkan pesan jika tidak ada hasil yang cocok
+        if (dataDitemukan === 0 && barisKegiatan.length > 0) {
+            filterKosongRow.style.display = "";
+        } else {
+            filterKosongRow.style.display = "none";
+        }
+    }
+
+    // Pasang Event Listener saat input diubah
+    searchJudul.addEventListener("input", jalankanFilter);
+    filterKategori.addEventListener("change", jalankanFilter);
+    filterStatus.addEventListener("change", jalankanFilter);
+    filterTglMulai.addEventListener("change", jalankanFilter);
+    filterTglSelesai.addEventListener("change", jalankanFilter);
+
+    // Tombol Reset Filter
+    btnResetFilter.addEventListener("click", function () {
+        searchJudul.value = "";
+        filterKategori.value = "";
+        filterStatus.value = "";
+        filterTglMulai.value = "";
+        filterTglSelesai.value = "";
+        jalankanFilter();
+    });
+});
+</script>
+
 <script>
     var editMaps = {};
 
@@ -222,18 +381,15 @@
             editMaps[id].remove();
         }
 
-        // 1. Definisi Layer khusus modal Edit
         var osmEdit = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
         var satelitEdit = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles © Esri' });
 
-        // 2. Inisialisasi Map
         editMaps[id] = L.map(containerId, {
             center: latlng,
             zoom: 15,
             layers: [osmEdit]
         });
 
-        // 3. Tambah Kontrol Pilihan Map
         var baseMapsEdit = {
             "Default (Jalan)": osmEdit,
             "Satelit": satelitEdit
@@ -269,7 +425,6 @@
 
     document.getElementById('modalTambah').addEventListener('shown.bs.modal', function () {
         if (!map) {
-            // 1. Definisi Layer
             var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap'
             });
@@ -278,14 +433,12 @@
                 attribution: 'Tiles © Esri'
             });
 
-            // 2. Inisialisasi Peta
             map = L.map('mapPicker', {
                 center: [1.3622, 109.3117],
                 zoom: 13,
-                layers: [osm] // Default
+                layers: [osm]
             });
 
-            // 3. Tambah Kontrol Pilihan Map
             var baseMaps = {
                 "Default (Jalan)": osm,
                 "Satelit": satelit
@@ -310,7 +463,7 @@
     });
 </script>
 <script>
-function previewLengkap(judul, deskripsi, fotoRaw, tanggal, lokasi, anggaran, lat, lng) {
+function previewLengkap(judul, kategori, deskripsi, fotoRaw, tanggal, lokasi, anggaran, lat, lng) {
     let htmlFoto = '';
     try {
         let daftarFoto = JSON.parse(fotoRaw);
@@ -327,7 +480,6 @@ function previewLengkap(judul, deskripsi, fotoRaw, tanggal, lokasi, anggaran, la
         }
     }
 
-    // Link Google Maps
     let gmapsLink = (lat && lng) ? `https://www.google.com/maps?q=${lat},${lng}` : '#';
 
     Swal.fire({
@@ -335,6 +487,11 @@ function previewLengkap(judul, deskripsi, fotoRaw, tanggal, lokasi, anggaran, la
         html: `
             <div class="text-start mt-2" style="max-height: 500px; overflow-y: auto; overflow-x: hidden;">
                 ${htmlFoto}
+                <div class="mb-3 text-center">
+                    <span class="badge bg-secondary px-3 py-2 rounded-pill" style="font-size: 12px; letter-spacing: 0.5px;">
+                        <i class="fas fa-tags me-1"></i> KATEGORI: ${kategori.toUpperCase()}
+                    </span>
+                </div>
                 <div class="row g-2 mb-3">
                     <div class="col-6"><div class="p-2 border rounded bg-light small"><b>TANGGAL:</b><br>${tanggal}</div></div>
                     <div class="col-6"><div class="p-2 border rounded bg-light small"><b>LOKASI:</b><br>${lokasi}</div></div>

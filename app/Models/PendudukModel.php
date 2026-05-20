@@ -10,10 +10,18 @@ class PendudukModel extends Model
     protected $primaryKey       = 'id_penduduk';
     protected $useAutoIncrement = true;
     protected $allowedFields    = [
-        'nik', 'nama_penduduk', 'jenis_kelamin', 
-        'no_wa', 'alamat', 'dusun', 'rt', 'rw', 'status_aktif'
+        'nik', 
+        'nama_penduduk', 
+        'jabatan',       // <--- TAMBAHKAN INI
+        'nomor_jabatan', // <--- TAMBAHKAN INI
+        'jenis_kelamin', 
+        'no_wa', 
+        'alamat', 
+        'dusun', 
+        'rt', 
+        'rw', 
+        'status_aktif'
     ];
 
-    // Dates
     protected $useTimestamps = true;
 }

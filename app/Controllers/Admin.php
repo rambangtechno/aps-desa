@@ -87,6 +87,7 @@ public function index()
         // 3. Siapkan data untuk Database
         $data_simpan = [
             'judul_kegiatan' => $this->request->getPost('judul_kegiatan'),
+            'kategori'       => $this->request->getPost('kategori'),
             'deskripsi'      => $this->request->getPost('deskripsi'),
             'tanggal'        => $this->request->getPost('tanggal'),
             'lokasi'         => $this->request->getPost('lokasi'),
@@ -118,6 +119,7 @@ public function index()
         // 2. Persiapkan Data yang Akan Diupdate (Non-Foto)
         $data_update = [
             'judul_kegiatan' => $this->request->getPost('judul_kegiatan'),
+            'kategori'       => $this->request->getPost('kategori'),
             'deskripsi'      => $this->request->getPost('deskripsi'),
             'tanggal'        => $this->request->getPost('tanggal'),
             'lokasi'         => $this->request->getPost('lokasi'),
@@ -425,32 +427,54 @@ public function update_user($id)
     return redirect()->to('/admin/kelola_user')->with('success', 'Data user berhasil diperbarui.');
 }
 
-// Di dalam class Admin:
+/// Menampilkan Daftar Ketua RT/RW
 public function penduduk()
 {
     $model = new PendudukModel();
     $data = [
-        'title'    => 'Data Penduduk',
-        'penduduk' => $model->findAll()
+        'title'    => 'Data Ketua RT/RW', // <--- Ubah Title
+        'penduduk' => $model->orderBy('jabatan', 'ASC')->orderBy('nomor_jabatan', 'ASC')->findAll()
     ];
     return view('admin/penduduk_v', $data);
 }
 
+// Menyimpan data penduduk baru
 public function penduduk_simpan()
 {
     $model = new PendudukModel();
     $model->save([
         'nik'           => $this->request->getPost('nik'),
         'nama_penduduk' => $this->request->getPost('nama_penduduk'),
-        'jenis_kelamin' => $this->request->getPost('jenis_kelamin'),
+        'jenis_kelamin' => $this->request->getPost('jenis_kelamin'), // BARU
         'no_wa'         => $this->request->getPost('no_wa'),
+        'alamat'        => $this->request->getPost('alamat'),        // BARU
         'dusun'         => $this->request->getPost('dusun'),
+        'rt'            => $this->request->getPost('rt'),            // BARU
+        'rw'            => $this->request->getPost('rw'),            // BARU
         'status_aktif'  => 'Ya'
     ]);
 
-    return redirect()->to(base_url('admin/penduduk'))->with('success', 'Data warga berhasil ditambahkan!');
+    return redirect()->to(base_url('admin/penduduk'))->with('success', 'Data penduduk berhasil ditambahkan!');
 }
 
+// Mengubah data penduduk yang sudah ada (BARU)
+public function penduduk_update($id)
+{
+    $model = new PendudukModel();
+    $model->update($id, [
+        'nik'           => $this->request->getPost('nik'),
+        'nama_penduduk' => $this->request->getPost('nama_penduduk'),
+        'jenis_kelamin' => $this->request->getPost('jenis_kelamin'),
+        'no_wa'         => $this->request->getPost('no_wa'),
+        'alamat'        => $this->request->getPost('alamat'),
+        'dusun'         => $this->request->getPost('dusun'),
+        'rt'            => $this->request->getPost('rt'),
+        'rw'            => $this->request->getPost('rw'),
+        'status_aktif'  => $this->request->getPost('status_aktif') // Memungkinkan edit status aktif
+    ]);
+
+    return redirect()->to(base_url('admin/penduduk'))->with('success', 'Data penduduk berhasil diperbarui!');
+}
 public function penduduk_hapus($id)
 {
     $model = new PendudukModel();

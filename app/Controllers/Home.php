@@ -27,6 +27,26 @@ class Home extends BaseController
 
     return view('index_v', $data);
 }
+public function detail($id)
+{
+    // Pastikan instansiasi model sudah benar (sesuaikan dengan nama file model Anda)
+    // Jika belum di-construct di atas, Anda bisa panggil langsung menggunakan helper model() bawaan CI4:
+    $kegiatanModel = model('App\Models\KegiatanModel'); 
+
+    // Ambil data berdasarkan primary key (kegiatan_id)
+    $kegiatan = $kegiatanModel->find($id);
+
+    // Jika data kosong, beri proteksi 404
+    if (!$kegiatan) {
+        throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Data program tidak ditemukan.");
+    }
+
+    $data = [
+        'kegiatan' => $kegiatan
+    ];
+
+    return view('detail_v', $data);
+}
     public function profil()
     {
         // Data Kades tetap seperti yang kamu buat
